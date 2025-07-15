@@ -20,4 +20,22 @@ async function findUserByUsername(username) {
   return prisma.user.findUnique({ where: { username } });
 }
 
-module.exports = { createUser, findUserByEmail, findUserByUsername };
+async function findUserById(id) {
+  return prisma.user.findUnique({ where: { id } });
+}
+
+async function updateUserPassword(id, password_hash) {
+  return prisma.user.update({
+    where: { id },
+    data: { password_hash }
+  })
+}
+
+async function updateUser(id, updateData) {
+  return prisma.user.update({
+    where: { id },
+    data: updateData 
+  })
+}
+
+module.exports = { createUser, findUserByEmail, findUserByUsername, findUserById, updateUserPassword, updateUser };
