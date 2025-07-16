@@ -32,7 +32,7 @@ async function signup(req, res) {
   res.status(201).json({ message: 'User created successfully', user: { id: user.id, email: user.email, username: user.username } });
 }
 
-async function login(req, res) {
+async function signin(req, res) {
   const { username, password } = req.body;
 
   if(!username || !password) {
@@ -56,7 +56,7 @@ async function login(req, res) {
   );
 
   return res.status(200).json({
-    message: 'Login successful.',
+    message: 'Sign in successful.',
     token,
     user: { id: user.id, username: user.username, email: user.email }  // returning user object to frontend in response
   })
@@ -114,4 +114,4 @@ async function resetPassword(req, res) {
 }
 
 
-module.exports = { signup, login, forgotPassword, resetPassword };
+module.exports = { signup, signin, forgotPassword, resetPassword };
