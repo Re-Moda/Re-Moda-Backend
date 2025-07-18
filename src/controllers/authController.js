@@ -50,9 +50,9 @@ async function signin(req, res) {
   }
   
   const token = jwt.sign(
-    { userId: user.id, username: user.username},  // payload: user.id comes from prisma, name userId is used to be more descriptive in context of token
-     process.env.JWT_SECRET, 
-     {expiresIn: '1h'}
+    { userId: user.id, username: user.username, role: user.role },  // <-- add role here
+    process.env.JWT_SECRET, 
+    { expiresIn: '1h' }
   );
 
   return res.status(200).json({

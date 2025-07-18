@@ -18,7 +18,7 @@ model User {
   security_answer_hash String
   created_at           DateTime     @default(now())
   updated_at           DateTime     @updatedAt
-
+  role                 String       @default("user")
   closets              Closet[]
   categories           Category[]
   outfits              Outfit[]
