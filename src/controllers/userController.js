@@ -12,7 +12,10 @@ async function me(req, res) {  // user can only access their own info - using us
     }
 }
 
-async function getUserById(req, res) {  // (COME BACK TO THIS: prisma roles?)admin/dev can access any user's info 
+async function getUserById(req, res) {  // admin-only
+    if (!req.user || req.user.role !== 'admin') {
+        return res.status(403).json({ error: 'Admin access required.' });
+    }
     try {
         const user = await authService.findUserById(Number(req.params.id));
         if(!user) {
@@ -24,13 +27,11 @@ async function getUserById(req, res) {  // (COME BACK TO THIS: prisma roles?)adm
     }
 }
 
-async function updateUser(req, res) {
-    const userId = Number(req.params.id);
-    
-    if (userId !== req.user.userId) {  // compare user id w/ jwt id to prevent unauthorized access to other id's
-        return res.status(403).json({error: 'Unauthorized access.'});
+async function updateUser(req, res) {  // admin-only
+    if (!req.user || req.user.role !== 'admin') {
+        return res.status(403).json({ error: 'Admin access required.' });
     }
-
+    const userId = Number(req.params.id);
     const { username, email } = req.body;  
     const updateData = {};
     if (username) updateData.username = username;
