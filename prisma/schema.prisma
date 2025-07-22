@@ -19,6 +19,8 @@ model User {
   created_at           DateTime     @default(now())
   updated_at           DateTime     @updatedAt
   role                 String       @default("user")
+  avatar_url           String?
+  avatar_key           String?
   closets              Closet[]
   categories           Category[]
   outfits              Outfit[]

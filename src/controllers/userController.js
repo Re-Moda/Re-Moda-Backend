@@ -1,4 +1,6 @@
 const authService = require('../services/authService');
+const { uploadFileToS3 } = require('../services/s3Service');
+const prisma = require('../prismaClient');
 
 async function me(req, res) {  // user can only access their own info - using user id from jwt token in middleware
     try {
@@ -6,10 +8,29 @@ async function me(req, res) {  // user can only access their own info - using us
         if (!user) {
             return res.status(404).json({error: 'User not found.'});
         }
-        res.json({id: user.id, username: user.username, email: user.email});
+        res.json({
+          id: user.id,
+          username: user.username,
+          email: user.email,
+          avatar_url: user.avatar_url // include avatar_url
+        });
     } catch (error) {
       res.status(500).json({error: 'Server error.'});
     }
+}
+
+async function uploadAvatar(req, res) {
+  try {
+    if (!req.file) return res.status(400).json({ error: 'No file uploaded.' });
+    const s3Url = await uploadFileToS3(req.file);
+    const user = await prisma.user.update({
+      where: { id: req.user.userId },
+      data: { avatar_url: s3Url },
+    });
+    res.json({ avatar_url: user.avatar_url });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to upload avatar.' });
+  }
 }
 
 async function getUserById(req, res) {  // admin-only
@@ -42,4 +63,4 @@ async function updateUser(req, res) {  // admin-only
     res.json({id: updatedUser.id, username: updatedUser.username, email: updatedUser.email});
 }
 
-module.exports = { me, getUserById, updateUser }
+module.exports = { me, getUserById, updateUser, uploadAvatar };

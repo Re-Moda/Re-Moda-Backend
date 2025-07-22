@@ -2,6 +2,11 @@ require('dotenv').config();
 const express = require('express');
 const app = express();
 
+const cors = require('cors');
+app.use(cors({
+  origin: 'http://localhost:5173', // allow your frontend
+  credentials: true // if you use cookies or need credentials
+}));
 app.use(express.json());
 app.use('/auth', require('./routes/auth'));
 app.use('/users', require('./routes/users'));
