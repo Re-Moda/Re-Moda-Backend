@@ -1,4 +1,6 @@
 const authService = require('../services/authService');
+const { uploadFileToS3 } = require('../services/s3Service');
+const prisma = require('../prismaClient');
 
 async function me(req, res) {  // user can only access their own info - using user id from jwt token in middleware
     try {
@@ -6,13 +8,35 @@ async function me(req, res) {  // user can only access their own info - using us
         if (!user) {
             return res.status(404).json({error: 'User not found.'});
         }
-        res.json({id: user.id, username: user.username, email: user.email});
+        res.json({
+          id: user.id,
+          username: user.username,
+          email: user.email,
+          avatar_url: user.avatar_url // include avatar_url
+        });
     } catch (error) {
       res.status(500).json({error: 'Server error.'});
     }
 }
 
-async function getUserById(req, res) {  // (COME BACK TO THIS: prisma roles?)admin/dev can access any user's info 
+async function uploadAvatar(req, res) {
+  try {
+    if (!req.file) return res.status(400).json({ error: 'No file uploaded.' });
+    const s3Url = await uploadFileToS3(req.file);
+    const user = await prisma.user.update({
+      where: { id: req.user.userId },
+      data: { avatar_url: s3Url },
+    });
+    res.json({ avatar_url: user.avatar_url });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to upload avatar.' });
+  }
+}
+
+async function getUserById(req, res) {  // admin-only
+    if (!req.user || req.user.role !== 'admin') {
+        return res.status(403).json({ error: 'Admin access required.' });
+    }
     try {
         const user = await authService.findUserById(Number(req.params.id));
         if(!user) {
@@ -24,13 +48,11 @@ async function getUserById(req, res) {  // (COME BACK TO THIS: prisma roles?)adm
     }
 }
 
-async function updateUser(req, res) {
-    const userId = Number(req.params.id);
-    
-    if (userId !== req.user.userId) {  // compare user id w/ jwt id to prevent unauthorized access to other id's
-        return res.status(403).json({error: 'Unauthorized access.'});
+async function updateUser(req, res) {  // admin-only
+    if (!req.user || req.user.role !== 'admin') {
+        return res.status(403).json({ error: 'Admin access required.' });
     }
-
+    const userId = Number(req.params.id);
     const { username, email } = req.body;  
     const updateData = {};
     if (username) updateData.username = username;
@@ -41,4 +63,4 @@ async function updateUser(req, res) {
     res.json({id: updatedUser.id, username: updatedUser.username, email: updatedUser.email});
 }
 
-module.exports = { me, getUserById, updateUser }
+module.exports = { me, getUserById, updateUser, uploadAvatar };
