@@ -37,8 +37,8 @@ async function generateStoreImage(description) {
   try {
     const response = await openai.images.generate({
       model: 'dall-e-3',
-      prompt: description + 
-        ". Generate a single, centered product photo of only this clothing item on a fully transparent background. No people, no props, no duplicate items, no text, no shadows, no background color.",
+      prompt: description +
+        ". Generate a single, centered product photo of only this clothing item on a plain white background. Do not show more than one item. No people, no props, no duplicate items, no text, no shadows, and no extra objects. The item should be fully visible and clearly separated from the background.",
       n: 1,
       size: '1024x1024',
       response_format: 'url'
