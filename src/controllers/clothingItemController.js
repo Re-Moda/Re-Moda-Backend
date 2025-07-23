@@ -69,5 +69,20 @@ module.exports = {
   getClothingItemById: (req, res) => res.json({ message: 'Get clothing item by ID (not implemented)' }),
   updateClothingItem: (req, res) => res.json({ message: 'Update clothing item (not implemented)' }),
   deleteClothingItem: (req, res) => res.json({ message: 'Delete clothing item (not implemented)' }),
-  wearClothingItem: (req, res) => res.json({ message: 'Wear clothing item (not implemented)' })
+  wearClothingItem: (req, res) => res.json({ message: 'Wear clothing item (not implemented)' }),
+  markAsUnused: async (req, res) => {
+    try {
+      const itemId = parseInt(req.params.id);
+      const userId = req.user.userId;
+      // Call service to mark as unused, only if user is owner
+      const updated = await clothingItemService.markAsUnused(itemId, userId);
+      if (!updated) {
+        return res.status(403).json({ error: 'Not authorized or item not found.' });
+      }
+      res.json({ message: 'Clothing item marked as unused.' });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: 'Failed to mark item as unused.' });
+    }
+  }
 };

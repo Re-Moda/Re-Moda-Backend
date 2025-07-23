@@ -15,6 +15,14 @@ async function createClothingItem({ userId, closetId, categoryId, label, descrip
   });
 }
 
+async function markAsUnused(itemId, userId) {
+  // Find the item and check ownership
+  const item = await prisma.clothingItem.findUnique({ where: { id: itemId } });
+  if (!item || item.user_id !== userId) return false;
+  await prisma.clothingItem.update({ where: { id: itemId }, data: { status: 'unused' } });
+  return true;
+}
+
 module.exports = {
   async createClothingItem(/* data */) { return {}; },
   async getClothingItems(/* filters */) { return []; },
@@ -22,5 +30,6 @@ module.exports = {
   async getClothingItemById(/* id */) { return null; },
   async updateClothingItem(/* id, data */) { return {}; },
   async deleteClothingItem(/* id */) { return true; },
-  async wearClothingItem(/* id */) { return {}; }
+  async wearClothingItem(/* id */) { return {}; },
+  markAsUnused,
 };

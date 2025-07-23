@@ -16,5 +16,7 @@ app.use('/categories', require('./routes/categories'));
 app.use('/closets', require('./routes/closets'));
 app.use('/outfits', require('./routes/outfits'));
 app.use('/clothing-items', require('./routes/clothingItems'));
+app.use('/thrift', require('./routes/thrift'));
+app.use('/rewards', require('./routes/rewards'));
 
 module.exports = app;
