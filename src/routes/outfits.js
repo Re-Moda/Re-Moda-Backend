@@ -27,4 +27,7 @@ router.post('/:id/add-item', authenticateToken, outfitController.addItemToOutfit
 // Removes clothing item from outfit; auto-delete outfit if empty
 router.delete('/:id/remove-item/:itemId', authenticateToken, outfitController.removeItemFromOutfit);
 
+// Add this route for generating avatar with outfit
+router.post('/generate-avatar', authenticateToken, outfitController.generateAvatarWithOutfit);
+
 module.exports = router;
