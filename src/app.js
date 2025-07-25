@@ -4,11 +4,20 @@ const cors = require('cors');
 const app = express();
 
 app.use(cors({
-  origin: 'http://localhost:5173',
+  origin: [
+    'http://localhost:5173',
+    'https://my-remoda.com',
+    'https://www.my-remoda.com'
+  ],
   credentials: true
 }));
 
 app.use(express.json());
+
+// Health check endpoint
+app.get('/health', (req, res) => {
+  res.json({ status: 'OK', message: 'Re-Moda Backend is running' });
+});
 
 app.use('/auth', require('./routes/auth'));
 app.use('/users', require('./routes/users'));
