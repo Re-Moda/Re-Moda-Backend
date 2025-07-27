@@ -43,23 +43,42 @@ async function signup(req, res) {
 
 async function signin(req, res) {
   try {
+    console.log('=== SIGNIN DEBUG START ===');
+    console.log('Signin attempt with body:', req.body);
+    console.log('JWT_SECRET exists:', !!process.env.JWT_SECRET);
+    console.log('JWT_SECRET length:', process.env.JWT_SECRET ? process.env.JWT_SECRET.length : 0);
+    
     const { username, password } = req.body;
     if (!username || !password) {
+      console.log('Missing username or password');
       return res.status(400).json({ success: false, message: 'All fields are required.' });
     }
+    
+    console.log('Looking for user with username:', username);
     const user = await authService.findUserByUsername(username);
+    console.log('User found:', !!user);
     if (!user) {
+      console.log('User not found');
       return res.status(401).json({ success: false, message: 'Invalid credentials.' });
     }
+    
+    console.log('User found, checking password');
     const isMatch = await bcrypt.compare(password, user.password_hash);
+    console.log('Password match:', isMatch);
     if (!isMatch) {
+      console.log('Password does not match');
       return res.status(401).json({ success: false, message: 'Invalid credentials.' });
     }
+    
+    console.log('Password matches, creating JWT token');
     const token = jwt.sign(
       { userId: user.id, username: user.username, role: user.role },
       process.env.JWT_SECRET,
       { expiresIn: '1h' }
     );
+    
+    console.log('Signin successful for user:', username);
+    console.log('=== SIGNIN DEBUG END ===');
     return res.status(200).json({
       success: true,
       message: 'Sign in successful.',
@@ -67,7 +86,11 @@ async function signin(req, res) {
       data: { id: user.id, username: user.username, email: user.email }
     });
   } catch (error) {
-    console.error('Error in signin:', error);
+    console.error('=== SIGNIN ERROR ===');
+    console.error('Error type:', error.constructor.name);
+    console.error('Error message:', error.message);
+    console.error('Error stack:', error.stack);
+    console.error('=== END SIGNIN ERROR ===');
     res.status(500).json({ success: false, message: error.message || 'Signin failed' });
   }
 }

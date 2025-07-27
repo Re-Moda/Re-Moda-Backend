@@ -23,4 +23,6 @@ services:
       - key: OPENAI_API_KEY
         sync: false
       - key: CLAID_API_KEY
+        sync: false
+      - key: REPLICATE_API_KEY
         sync: false 

@@ -34,7 +34,7 @@ AWS_SECRET_ACCESS_KEY=your-aws-secret-key
 AWS_REGION=us-east-2
 AWS_S3_BUCKET_NAME=clothing-items-remoda
 OPENAI_API_KEY=your-openai-api-key
-CLAID_API_KEY=your-claid-api-key
+REPLICATE_API_KEY=your-replicate-api-key
 NODE_ENV=production
 ```
 

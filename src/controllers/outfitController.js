@@ -1,4 +1,7 @@
 const outfitService = require('../services/outfitService');
+const axios = require('axios');
+const fs = require('fs');
+const path = require('path');
 
 // List outfits for user (supports ?favorite=, ?recurring=)
 const getOutfits = async (req, res) => {
@@ -249,14 +252,13 @@ async function describeAvatarImage(avatarUrl) {
 }
 
 // POST /outfits/generate-avatar
-const axios = require('axios');
-const fs = require('fs');
-const path = require('path');
-
 const generateAvatarWithOutfit = async (req, res) => {
   try {
     const userId = req.user.userId;
     const { topId, bottomId } = req.body;
+
+    console.log('generateAvatarWithOutfit called with:', { userId, topId, bottomId });
+
     if (!topId || !bottomId) {
       return res.status(400).json({ success: false, message: 'topId and bottomId are required.' });
     }
@@ -265,6 +267,12 @@ const generateAvatarWithOutfit = async (req, res) => {
     const prisma = require('../prismaClient');
     const top = await prisma.clothingItem.findUnique({ where: { id: Number(topId) } });
     const bottom = await prisma.clothingItem.findUnique({ where: { id: Number(bottomId) } });
+
+    console.log('Found clothing items:', {
+      top: top ? { id: top.id, image_key: top.image_key, description: top.description } : null,
+      bottom: bottom ? { id: bottom.id, image_key: bottom.image_key, description: bottom.description } : null
+    });
+
     if (!top || !bottom) {
       return res.status(404).json({ success: false, message: 'Top or bottom item not found.' });
     }
@@ -279,80 +287,38 @@ const generateAvatarWithOutfit = async (req, res) => {
     // Get the user's avatar image URL
     const user = await require('../services/authService').findUserById(userId);
     const avatarImageUrl = user.avatar_url;
+
+    console.log('User avatar URL:', avatarImageUrl);
+
     if (!avatarImageUrl) {
       return res.status(400).json({ success: false, message: 'User avatar image not found.' });
     }
 
-    const claidApiKey = process.env.CLAID_API_KEY;
+    // Describe the avatar using GPT-4 Vision
+    console.log('Describing avatar image...');
+    const avatarDescription = await describeAvatarImage(avatarImageUrl);
+    console.log('Avatar description:', avatarDescription);
 
-    // --- First Claid API call: apply the top ---
-    const topPayload = {
-      input: avatarImageUrl,
-      operations: {
-        generative: {
-          style_transfer: {
-            prompt: `Make my avatar wear this top: "${top.description}"`,
-            style_reference_image: top.image_key,
-            style_strength: 0.75,
-            denoising_strength: 0.75,
-            depth_strength: 1.0
-          }
-        }
-      },
-      output: null
-    };
+    // Generate new avatar with outfit using DALL-E 3
+    console.log('Generating avatar with outfit using DALL-E 3...');
+    
+    const outfitPrompt = `A person with these exact characteristics: ${avatarDescription}. The person is wearing ${top.description} on top and ${bottom.description} on bottom. The clothing fits perfectly on the person's body. Use natural, even lighting like a studio photo shoot—no shadows, no dramatic lighting, no backlight. The person must look like a real human—not a model, not a fashion illustration. Preserve the original avatar's proportions, skin tone, pose, and realism. Do not beautify or change facial structure. Do not render in 3D, do not use CGI effects, do not make skin glossy or clothing shiny. No surreal edits. Output should resemble a candid clothing catalog photo. The clothing is matte fabric, no gloss, realistic photo, no highlights. The person has the exact same face, pose, body type, skin tone, and hair as described.`;
 
-    const topResponse = await axios.post(
-      'https://api.claid.ai/v1-beta1/image/edit',
-      topPayload,
-      {
-        headers: {
-          Authorization: `Bearer ${claidApiKey}`,
-          'Content-Type': 'application/json'
-        }
-      }
-    );
+    console.log('DALL-E 3 prompt:', outfitPrompt);
 
-    const topResultUrl = topResponse.data.output?.url;
-    if (!topResultUrl) {
-      return res.status(502).json({ success: false, message: 'Claid API (top) did not return an image URL.' });
-    }
+    const response = await openai.images.generate({
+      model: 'dall-e-3',
+      prompt: outfitPrompt,
+      n: 1,
+      size: '1024x1024',
+      response_format: 'url'
+    });
 
-    // --- Second Claid API call: apply the bottom ---
-    const bottomPayload = {
-      input: topResultUrl,
-      operations: {
-        generative: {
-          style_transfer: {
-            prompt: `Make my avatar wear these bottoms: "${bottom.description}"`,
-            style_reference_image: bottom.image_key,
-            style_strength: 0.75,
-            denoising_strength: 0.75,
-            depth_strength: 1.0
-          }
-        }
-      },
-      output: null
-    };
+    const generatedImageUrl = response.data[0].url;
+    console.log('Generated avatar URL:', generatedImageUrl);
 
-    const bottomResponse = await axios.post(
-      'https://api.claid.ai/v1-beta1/image/edit',
-      bottomPayload,
-      {
-        headers: {
-          Authorization: `Bearer ${claidApiKey}`,
-          'Content-Type': 'application/json'
-        }
-      }
-    );
-
-    const finalImageUrl = bottomResponse.data.output?.url;
-    if (!finalImageUrl) {
-      return res.status(502).json({ success: false, message: 'Claid API (bottom) did not return an image URL.' });
-    }
-
-    // Download the image and upload to S3 as before
-    const imageRes = await axios.get(finalImageUrl, { responseType: 'arraybuffer' });
+    // Download the image and upload to S3
+    const imageRes = await axios.get(generatedImageUrl, { responseType: 'arraybuffer' });
     const s3Service = require('../services/s3Service');
     const file = {
       originalname: `avatar-${userId}-outfit.png`,
@@ -360,6 +326,8 @@ const generateAvatarWithOutfit = async (req, res) => {
       mimetype: 'image/png'
     };
     const s3Url = await s3Service.uploadFileToS3(file);
+
+    console.log('Uploaded to S3:', s3Url);
 
     // Return the new image URL (do NOT update user.avatar_url)
     return res.json({ success: true, generated_avatar_url: s3Url });
