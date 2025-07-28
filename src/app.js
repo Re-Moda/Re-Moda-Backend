@@ -9,6 +9,7 @@ app.use(cors({
     'https://my-remoda.com',
     'https://www.my-remoda.com',
     'https://deploy-preview-13--re-moda-frontend.netlify.app',
+    'https://deploy-preview-15--re-moda-frontend.netlify.app',
     'https://re-moda-frontend.netlify.app'
   ],
   credentials: true
