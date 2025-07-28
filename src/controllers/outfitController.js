@@ -26,20 +26,32 @@ const getOutfits = async (req, res) => {
 // Creates a new outfit with selected items
 const createOutfit = async (req, res) => {
   try {
-    const { title, clothingItemIds, is_favorite = false, is_recurring = false } = req.body;
+    const { title, clothingItemIds, is_favorite = false, is_recurring = false, image_key, bucket_name } = req.body;
     const userId = req.user.userId;
-    if (!title || !clothingItemIds || !Array.isArray(clothingItemIds)) {
+    
+    if (!title) {
       return res.status(400).json({
         success: false,
-        message: "Title and clothing item IDs array are required"
+        message: "Title is required"
       });
     }
+    
+    if (!clothingItemIds || !Array.isArray(clothingItemIds) || clothingItemIds.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "At least one clothing item ID is required"
+      });
+    }
+    
     const outfit = await outfitService.createOutfit(userId, {
       title,
       clothingItemIds,
       is_favorite,
-      is_recurring
+      is_recurring,
+      image_key,
+      bucket_name
     });
+    
     res.status(201).json({
       success: true,
       data: outfit,
@@ -47,6 +59,15 @@ const createOutfit = async (req, res) => {
     });
   } catch (error) {
     console.error('Error creating outfit:', error);
+    
+    // Handle specific validation errors
+    if (error.message.includes('Clothing items not found')) {
+      return res.status(400).json({
+        success: false,
+        message: error.message
+      });
+    }
+    
     res.status(500).json({
       success: false,
       message: error.message || "Failed to create outfit"
@@ -84,12 +105,14 @@ const getOutfitById = async (req, res) => {
 const updateOutfit = async (req, res) => {
   try {
     const { id } = req.params;
-    const { title, is_favorite, is_recurring } = req.body;
+    const { title, is_favorite, is_recurring, image_key, bucket_name } = req.body;
     const userId = req.user.userId;
     const outfit = await outfitService.updateOutfit(userId, parseInt(id), {
       title,
       is_favorite,
-      is_recurring
+      is_recurring,
+      image_key,
+      bucket_name
     });
     if (!outfit) {
       return res.status(404).json({
@@ -228,6 +251,77 @@ const removeItemFromOutfit = async (req, res) => {
   }
 };
 
+// Mark outfit as worn
+const markAsWorn = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { worn, worn_date } = req.body;
+    const userId = req.user.userId;
+    
+    if (worn === false) {
+      return res.status(400).json({
+        success: false,
+        message: "Cannot unmark as worn. Use wear count to track usage."
+      });
+    }
+    
+    const outfit = await outfitService.markAsWorn(userId, parseInt(id), { worn_date });
+    
+    if (!outfit) {
+      return res.status(404).json({
+        success: false,
+        message: "Outfit not found"
+      });
+    }
+    
+    res.status(200).json({
+      success: true,
+      data: outfit,
+      message: "Outfit marked as worn successfully"
+    });
+  } catch (error) {
+    console.error('Error marking outfit as worn:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || "Failed to mark outfit as worn"
+    });
+  }
+};
+
+// Toggle favorite status for an outfit
+const toggleFavorite = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user.userId;
+    
+    const outfit = await outfitService.getOutfitById(userId, parseInt(id));
+    
+    if (!outfit) {
+      return res.status(404).json({
+        success: false,
+        message: "Outfit not found"
+      });
+    }
+    
+    // Toggle the favorite status
+    const updatedOutfit = await outfitService.updateOutfit(userId, parseInt(id), {
+      is_favorite: !outfit.is_favorite
+    });
+    
+    res.status(200).json({
+      success: true,
+      data: updatedOutfit,
+      message: `Outfit ${updatedOutfit.is_favorite ? 'added to' : 'removed from'} favorites`
+    });
+  } catch (error) {
+    console.error('Error toggling favorite:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || "Failed to toggle favorite status"
+    });
+  }
+};
+
 // Helper: Describe avatar image using GPT-4 Vision
 const { OpenAI } = require('openai');
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
@@ -346,6 +440,8 @@ module.exports = {
   deleteOutfit,
   wearOutfit,
   addItemToOutfit,
-  removeItemFromOutfit
+  removeItemFromOutfit,
+  markAsWorn,
+  toggleFavorite
 };
 module.exports.generateAvatarWithOutfit = generateAvatarWithOutfit;

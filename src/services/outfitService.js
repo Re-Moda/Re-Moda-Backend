@@ -1,7 +1,7 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
-// List outfits for user (supports ?favorite=, ?recurring=)
+// List outfits for user (supports ?favorite=, ?recurring=, ?worn=)
 const getOutfits = async (userId, filters = {}) => {
   try {
     const where = { user_id: userId };
@@ -10,6 +10,13 @@ const getOutfits = async (userId, filters = {}) => {
     }
     if (filters.recurring !== undefined) {
       where.is_recurring = filters.recurring === 'true';
+    }
+    if (filters.worn !== undefined) {
+      if (filters.worn === 'true') {
+        where.wear_count = { gt: 0 };
+      } else {
+        where.wear_count = 0;
+      }
     }
     const outfits = await prisma.outfit.findMany({
       where,
@@ -37,19 +44,50 @@ const getOutfits = async (userId, filters = {}) => {
 // Create a new outfit with selected items
 const createOutfit = async (userId, outfitData) => {
   try {
-    const { title, clothingItemIds, is_favorite, is_recurring } = outfitData;
+    const { title, clothingItemIds, is_favorite, is_recurring, image_key, bucket_name } = outfitData;
+    
+    // Validate that all clothing items exist and belong to the user
+    if (clothingItemIds && clothingItemIds.length > 0) {
+      const existingItems = await prisma.clothingItem.findMany({
+        where: {
+          id: { in: clothingItemIds },
+          closet: {
+            user_id: userId
+          }
+        },
+        select: { id: true }
+      });
+      
+      const existingItemIds = existingItems.map(item => item.id);
+      const missingItemIds = clothingItemIds.filter(id => !existingItemIds.includes(id));
+      
+      if (missingItemIds.length > 0) {
+        throw new Error(`Clothing items not found or don't belong to user: ${missingItemIds.join(', ')}`);
+      }
+    }
+    
+    const outfitDataToCreate = {
+      user_id: userId,
+      title,
+      is_favorite,
+      is_recurring,
+      outfitClothingItems: {
+        create: clothingItemIds.map(itemId => ({
+          clothing_item_id: itemId
+        }))
+      }
+    };
+    
+    // Only add image fields if they are provided
+    if (image_key !== undefined) {
+      outfitDataToCreate.image_key = image_key;
+    }
+    if (bucket_name !== undefined) {
+      outfitDataToCreate.bucket_name = bucket_name;
+    }
+    
     const outfit = await prisma.outfit.create({
-      data: {
-        user_id: userId,
-        title,
-        is_favorite,
-        is_recurring,
-        outfitClothingItems: {
-          create: clothingItemIds.map(itemId => ({
-            clothing_item_id: itemId
-          }))
-        }
-      },
+      data: outfitDataToCreate,
       include: {
         outfitClothingItems: {
           include: {
@@ -63,9 +101,13 @@ const createOutfit = async (userId, outfitData) => {
         }
       }
     });
+    
     return outfit;
   } catch (error) {
     console.error('Error in createOutfit:', error);
+    if (error.message.includes('Clothing items not found')) {
+      throw error; // Re-throw our custom error
+    }
     throw new Error('Failed to create outfit');
   }
 };
@@ -102,11 +144,13 @@ const getOutfitById = async (userId, outfitId) => {
 // Edit title, mark as favorite/recurring
 const updateOutfit = async (userId, outfitId, updateData) => {
   try {
-    const { title, is_favorite, is_recurring } = updateData;
+    const { title, is_favorite, is_recurring, image_key, bucket_name } = updateData;
     const updateFields = {};
     if (title !== undefined) updateFields.title = title;
     if (is_favorite !== undefined) updateFields.is_favorite = is_favorite;
     if (is_recurring !== undefined) updateFields.is_recurring = is_recurring;
+    if (image_key !== undefined) updateFields.image_key = image_key;
+    if (bucket_name !== undefined) updateFields.bucket_name = bucket_name;
     const outfit = await prisma.outfit.update({
       where: {
         id: outfitId,
@@ -280,6 +324,69 @@ const removeItemFromOutfit = async (userId, outfitId, clothingItemId) => {
   }
 };
 
+// Mark outfit as worn (with optional worn_date)
+const markAsWorn = async (userId, outfitId, wornData = {}) => {
+  try {
+    const outfit = await prisma.outfit.findFirst({
+      where: {
+        id: outfitId,
+        user_id: userId
+      },
+      include: {
+        outfitClothingItems: {
+          include: {
+            clothingItem: true
+          }
+        }
+      }
+    });
+    
+    if (!outfit) return null;
+    
+    const now = new Date();
+    const wornDate = wornData.worn_date ? new Date(wornData.worn_date) : now;
+    
+    const updatedOutfit = await prisma.outfit.update({
+      where: { id: outfitId },
+      data: {
+        wear_count: { increment: 1 },
+        last_worn_at: wornDate
+      },
+      include: {
+        outfitClothingItems: {
+          include: {
+            clothingItem: {
+              include: {
+                category: true,
+                closet: true
+              }
+            }
+          }
+        }
+      }
+    });
+    
+    // Also increment wear count for all clothing items in the outfit
+    const clothingItemIds = outfit.outfitClothingItems.map(oci => oci.clothing_item_id);
+    if (clothingItemIds.length > 0) {
+      await prisma.clothingItem.updateMany({
+        where: {
+          id: { in: clothingItemIds }
+        },
+        data: {
+          wear_count: { increment: 1 },
+          last_worn_at: wornDate
+        }
+      });
+    }
+    
+    return updatedOutfit;
+  } catch (error) {
+    console.error('Error in markAsWorn:', error);
+    throw new Error('Failed to mark outfit as worn');
+  }
+};
+
 module.exports = {
   getOutfits,
   createOutfit,
@@ -288,5 +395,6 @@ module.exports = {
   deleteOutfit,
   wearOutfit,
   addItemToOutfit,
-  removeItemFromOutfit
+  removeItemFromOutfit,
+  markAsWorn
 };
