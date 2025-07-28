@@ -58,6 +58,91 @@ const getChatSession = async (req, res) => {
   }
 };
 
+// Get all messages in a session
+const getSessionMessages = async (req, res) => {
+  try {
+    const { sessionId } = req.params;
+    const userId = req.user.userId;
+    
+    // Verify session belongs to user
+    const session = await prisma.chatSession.findFirst({
+      where: {
+        id: parseInt(sessionId),
+        user_id: userId
+      }
+    });
+    
+    if (!session) {
+      return res.status(404).json({
+        success: false,
+        message: "Chat session not found"
+      });
+    }
+
+    // Get all messages for the session
+    const messages = await prisma.chatMessage.findMany({
+      where: {
+        session_id: parseInt(sessionId)
+      },
+      orderBy: {
+        sent_at: 'asc'
+      }
+    });
+
+    res.status(200).json({
+      success: true,
+      data: messages
+    });
+  } catch (error) {
+    console.error('Error getting session messages:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || "Failed to get session messages"
+    });
+  }
+};
+
+// Delete chat session
+const deleteChatSession = async (req, res) => {
+  try {
+    const { sessionId } = req.params;
+    const userId = req.user.userId;
+    
+    // Verify session belongs to user
+    const session = await prisma.chatSession.findFirst({
+      where: {
+        id: parseInt(sessionId),
+        user_id: userId
+      }
+    });
+    
+    if (!session) {
+      return res.status(404).json({
+        success: false,
+        message: "Chat session not found"
+      });
+    }
+
+    // Delete session (messages will be cascaded due to foreign key)
+    await prisma.chatSession.delete({
+      where: {
+        id: parseInt(sessionId)
+      }
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "Chat session deleted successfully"
+    });
+  } catch (error) {
+    console.error('Error deleting chat session:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || "Failed to delete chat session"
+    });
+  }
+};
+
 // Send message to AI stylist and get outfit recommendations
 const sendMessage = async (req, res) => {
   try {
@@ -192,6 +277,8 @@ const getUserChatSessions = async (req, res) => {
 module.exports = {
   startChatSession,
   getChatSession,
+  getSessionMessages,
+  deleteChatSession,
   sendMessage,
   createOutfitFromRecommendation,
   getUserChatSessions
