@@ -160,12 +160,23 @@ const sendMessage = async (req, res) => {
     // Add user message to chat
     await chatService.addMessage(parseInt(sessionId), 'user', message);
 
-    // Generate outfit recommendations
+    // Generate outfit recommendations (or get helpful response)
     const recommendations = await chatService.generateOutfitRecommendations(
       userId, 
       message, 
       parseInt(sessionId)
     );
+
+    // If no recommendations were generated, just return success
+    if (!recommendations) {
+      return res.status(200).json({
+        success: true,
+        data: {
+          message: "Helpful response provided",
+          recommendations: null
+        }
+      });
+    }
 
     // Generate images for the recommendations
     const outfitImages = await chatService.generateOutfitImages(recommendations, userId);
