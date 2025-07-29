@@ -1,4 +1,4 @@
-# ReModa Backen
+# ReModa Backend
 
 A comprehensive fashion styling platform backend built with Node.js, Express, and Prisma. This powers the ReModa frontend application, providing AI-powered outfit generation, user management, and clothing item organization.
 
