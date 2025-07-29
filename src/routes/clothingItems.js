@@ -11,6 +11,8 @@ router.get('/', authenticateToken, clothingItemController.getClothingItems);
 router.get('/:id', authenticateToken, clothingItemController.getClothingItemById);
 // Edit clothing item (description, tags)
 router.patch('/:id', authenticateToken, clothingItemController.updateClothingItem);
+// Mark clothing item as unused
+router.patch('/:id/unused', authenticateToken, clothingItemController.markAsUnused);
 // Remove (soft delete) clothing item
 router.delete('/:id', authenticateToken, clothingItemController.deleteClothingItem);
 // Increment wear count & set last_worn

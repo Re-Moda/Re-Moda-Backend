@@ -81,10 +81,83 @@ const getUserClothingItems = async (userId) => {
   }
 };
 
+// Analyze user intent to determine if they want outfit recommendations
+const analyzeUserIntent = async (userRequest) => {
+  try {
+    console.log('Analyzing user intent for:', userRequest);
+    
+    const intentPrompt = `Analyze this user message and determine if they are asking for outfit help or fashion advice.
+
+User message: "${userRequest}"
+
+Respond with ONLY a JSON object:
+{
+  "needsOutfitHelp": true/false,
+  "reason": "brief explanation of why they do or don't need outfit help"
+}
+
+Examples:
+- "hello" → needsOutfitHelp: false
+- "I need an outfit for a job interview" → needsOutfitHelp: true
+- "What should I wear to a wedding?" → needsOutfitHelp: true
+- "How are you?" → needsOutfitHelp: false
+- "I want to look good for a date" → needsOutfitHelp: true
+- "Can you help me?" → needsOutfitHelp: false (too vague)
+- "Show me some outfits" → needsOutfitHelp: true`;
+
+    const response = await openai.chat.completions.create({
+      model: 'gpt-4o',
+      messages: [
+        { role: 'system', content: 'You are an intent analyzer. Determine if users need outfit help.' },
+        { role: 'user', content: intentPrompt }
+      ],
+      max_tokens: 200,
+      temperature: 0.1
+    });
+
+    let cleanResponse = response.choices[0].message.content.trim();
+    
+    // Remove markdown if present
+    if (cleanResponse.startsWith('```json')) {
+      cleanResponse = cleanResponse.replace(/^```json\n/, '').replace(/\n```$/, '');
+    } else if (cleanResponse.startsWith('```')) {
+      cleanResponse = cleanResponse.replace(/^```\n/, '').replace(/\n```$/, '');
+    }
+
+    const intent = JSON.parse(cleanResponse);
+    console.log('Intent analysis result:', intent);
+    
+    return intent;
+  } catch (error) {
+    console.error('Error analyzing user intent:', error);
+    // Default to false if analysis fails
+    return { needsOutfitHelp: false, reason: "Intent analysis failed" };
+  }
+};
+
 // AI Stylist: Generate outfit recommendations based on user request
 const generateOutfitRecommendations = async (userId, userRequest, sessionId) => {
   try {
     console.log('generateOutfitRecommendations called with:', { userId, userRequest, sessionId });
+    
+    // First, analyze if the user actually needs outfit help
+    const intent = await analyzeUserIntent(userRequest);
+    
+    if (!intent.needsOutfitHelp) {
+      // User doesn't need outfit help, return a helpful response instead
+      const helpfulResponse = `I'm here to help you with fashion and outfit advice! Try asking me things like:
+      
+• "I need an outfit for a job interview"
+• "What should I wear to a wedding?"
+• "Help me pick an outfit for a date"
+• "I want to look professional for work"
+• "Show me some casual weekend outfits"
+
+What kind of outfit are you looking for?`;
+      
+      await addMessage(sessionId, 'assistant', helpfulResponse);
+      return null; // No outfit recommendations needed
+    }
     
     // Get user's clothing items
     const clothingItems = await getUserClothingItems(userId);
@@ -158,18 +231,18 @@ Please recommend 3 outfit combinations from my wardrobe that would be perfect fo
       } else if (cleanResponse.startsWith('```')) {
         cleanResponse = cleanResponse.replace(/^```\n/, '').replace(/\n```$/, '');
       }
-      
+
       console.log('Cleaned response:', cleanResponse);
-      
+
       recommendations = JSON.parse(cleanResponse);
     } catch (parseError) {
       console.error('JSON parse error:', parseError);
       console.error('Raw response:', response.choices[0].message.content);
       throw new Error('Failed to parse AI response. Please try again.');
     }
-    
+
     console.log('Parsed recommendations:', recommendations);
-    
+
     // Save the recommendations as an AI message
     console.log('Saving message to chat session...');
     await addMessage(sessionId, 'assistant', JSON.stringify({
@@ -177,7 +250,7 @@ Please recommend 3 outfit combinations from my wardrobe that would be perfect fo
       recommendations,
       userRequest
     }));
-    
+
     console.log('Message saved successfully');
 
     return recommendations;

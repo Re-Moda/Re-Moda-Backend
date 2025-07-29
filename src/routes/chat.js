@@ -12,10 +12,16 @@ router.get('/sessions', authenticateToken, chatController.getUserChatSessions);
 // Get specific chat session with messages
 router.get('/sessions/:sessionId', authenticateToken, chatController.getChatSession);
 
+// Get all messages in a session
+router.get('/sessions/:sessionId/messages', authenticateToken, chatController.getSessionMessages);
+
 // Send message to AI stylist and get outfit recommendations
 router.post('/sessions/:sessionId/messages', authenticateToken, chatController.sendMessage);
 
 // Create outfit from recommendation and generate avatar try-on
 router.post('/sessions/:sessionId/outfits', authenticateToken, chatController.createOutfitFromRecommendation);
+
+// Delete chat session
+router.delete('/sessions/:sessionId', authenticateToken, chatController.deleteChatSession);
 
 module.exports = router;
