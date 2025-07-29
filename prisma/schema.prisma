@@ -72,8 +72,6 @@ model ClothingItem {
   original_image_url String?     // Original image URL
   wear_count        Int      @default(0)
   last_worn_at      DateTime?
-  is_unused         Boolean  @default(false)
-  unused_at         DateTime?
   created_at        DateTime @default(now())
   updated_at        DateTime @updatedAt
 

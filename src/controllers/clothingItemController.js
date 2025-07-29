@@ -160,44 +160,7 @@ async function wearClothingItem(req, res) {
   }
 }
 
-async function markAsUnused(req, res) {
-  try {
-    const { id } = req.params;
-    const userId = req.user.userId;
-    
-    // Verify the item belongs to the user
-    const item = await prisma.clothingItem.findFirst({
-      where: {
-        id: parseInt(id),
-        closet: {
-          user_id: userId
-        }
-      }
-    });
 
-    if (!item) {
-      return res.status(404).json({ success: false, message: 'Clothing item not found.' });
-    }
-
-    // Mark item as unused
-    const updatedItem = await prisma.clothingItem.update({
-      where: { id: parseInt(id) },
-      data: {
-        is_unused: true,
-        unused_at: new Date()
-      }
-    });
-
-    res.json({ 
-      success: true, 
-      data: updatedItem,
-      message: 'Item marked as unused successfully'
-    });
-  } catch (error) {
-    console.error('Error in markAsUnused:', error);
-    res.status(500).json({ success: false, message: error.message || 'Failed to mark item as unused.' });
-  }
-}
 
 module.exports = {
   getClothingItems,
@@ -205,6 +168,5 @@ module.exports = {
   updateClothingItem,
   deleteClothingItem,
   wearClothingItem,
-  markAsUnused,
   uploadClothingItem
 };
