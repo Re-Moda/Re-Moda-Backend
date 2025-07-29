@@ -327,7 +327,17 @@ const { OpenAI } = require('openai');
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 async function describeAvatarImage(avatarUrl) {
-  const prompt = "Describe this person in detail: gender, skin tone, body type, pose, facial expression, and any other visible features. Do not mention clothing.";
+  const prompt = `Analyze this person's appearance in detail. Focus on:
+1. Gender (male/female/other)
+2. Exact skin tone and complexion
+3. Body type and proportions
+4. Facial features (eye color, hair color, hair style, facial structure)
+5. Pose and stance
+6. Age range
+7. Any distinctive features
+
+Be extremely specific and detailed. This description will be used to recreate the exact same person. Do not mention any clothing or accessories.`;
+  
   const response = await openai.chat.completions.create({
     model: 'gpt-4o',
     messages: [
@@ -339,7 +349,7 @@ async function describeAvatarImage(avatarUrl) {
         ],
       },
     ],
-    max_tokens: 150,
+    max_tokens: 200,
     response_format: { type: 'text' },
   });
   return response.choices[0].message.content.trim();

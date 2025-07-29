@@ -29,5 +29,6 @@ app.use('/closets', require('./routes/closets'));
 app.use('/outfits', require('./routes/outfits'));
 app.use('/clothing-items', require('./routes/clothingItems'));
 app.use('/chat', require('./routes/chat'));
+app.use('/mcp', require('./routes/mcp'));
 
 module.exports = app;
