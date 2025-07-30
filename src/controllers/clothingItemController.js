@@ -71,12 +71,24 @@ async function uploadClothingItem(req, res) {
       return res.status(400).json({ success: false, message: 'No file uploaded.' });
     }
     const { label, description } = req.body;
+    
+    console.log('Starting upload process for user:', userId);
+    console.log('File received:', req.file ? 'Yes' : 'No');
+    
     // 1. Upload original image to S3
+    console.log('Step 1: Uploading to S3...');
     const originalImageUrl = await uploadFileToS3(req.file);
+    console.log('S3 upload successful:', originalImageUrl);
+    
     // 2. Get description from GPT-4 Vision
+    console.log('Step 2: Getting AI description...');
     const aiDescription = await describeImage(originalImageUrl);
+    console.log('AI description received:', aiDescription);
+    
     // 3. Generate store-like image from description
+    console.log('Step 3: Generating store image...');
     const generatedImageUrl = await generateStoreImage(aiDescription);
+    console.log('Store image generated:', generatedImageUrl);
     
     // 4. Generate a proper label from the AI description if none provided
     let itemLabel = label;
@@ -114,24 +126,37 @@ async function uploadClothingItem(req, res) {
     });
   } catch (error) {
     console.error('Error in uploadClothingItem:', error);
+    console.error('Error stack:', error.stack);
     
     // Provide more specific error messages based on the error
     let errorMessage = 'Failed to process image or create item.';
+    let errorStep = 'Unknown';
     
     if (error.message && error.message.includes('rate limit')) {
       errorMessage = 'API rate limit exceeded. Please try again in a few minutes.';
+      errorStep = 'API Rate Limit';
     } else if (error.message && error.message.includes('quota')) {
       errorMessage = 'API quota exceeded. Please try again later.';
+      errorStep = 'API Quota';
     } else if (error.message && error.message.includes('S3')) {
       errorMessage = 'Image storage failed. Please try again.';
+      errorStep = 'S3 Upload';
     } else if (error.message && error.message.includes('OpenAI')) {
       errorMessage = 'AI processing failed. Please try again.';
+      errorStep = 'OpenAI API';
+    } else if (error.message && error.message.includes('describeImage')) {
+      errorMessage = 'Image analysis failed. Please try again.';
+      errorStep = 'Image Analysis';
+    } else if (error.message && error.message.includes('generateStoreImage')) {
+      errorMessage = 'Image generation failed. Please try again.';
+      errorStep = 'Image Generation';
     }
     
     res.status(500).json({ 
       success: false, 
       message: errorMessage,
-      details: error.message 
+      details: error.message,
+      step: errorStep
     });
   }
 }
