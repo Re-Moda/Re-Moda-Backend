@@ -24,5 +24,7 @@ router.patch('/:id/unused', authenticateToken, clothingItemController.markAsUnus
 router.get('/upload/status/:uploadId', authenticateToken, clothingItemController.getUploadStatus);
 // Get queue status
 router.get('/upload/queue-status', authenticateToken, clothingItemController.getQueueStatus);
+// Get global rate limit status
+router.get('/upload/global-rate-limit', authenticateToken, clothingItemController.getGlobalRateLimitStatus);
 
 module.exports = router;

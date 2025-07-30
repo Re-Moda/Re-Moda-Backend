@@ -2,6 +2,7 @@ const { uploadFileToS3 } = require('../services/s3Service');
 const { describeImage, generateStoreImage } = require('../services/llmService');
 const clothingItemService = require('../services/clothingItemService');
 const uploadQueueService = require('../services/uploadQueueService');
+const globalRateLimitService = require('../services/globalRateLimitService');
 const prisma = require('../prismaClient');
 const axios = require('axios');
 
@@ -255,16 +256,38 @@ async function getUploadStatus(req, res) {
 async function getQueueStatus(req, res) {
   try {
     const status = uploadQueueService.getQueueStatus();
+    const globalStatus = globalRateLimitService.getGlobalStatus();
     
     res.json({
       success: true,
-      data: status
+      data: {
+        ...status,
+        globalRateLimit: globalStatus
+      }
     });
   } catch (error) {
     console.error('Error getting queue status:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to get queue status'
+    });
+  }
+}
+
+// Get global rate limit status
+async function getGlobalRateLimitStatus(req, res) {
+  try {
+    const status = globalRateLimitService.getGlobalStatus();
+    
+    res.json({
+      success: true,
+      data: status
+    });
+  } catch (error) {
+    console.error('Error getting global rate limit status:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to get global rate limit status'
     });
   }
 }
@@ -278,5 +301,6 @@ module.exports = {
   markAsUnused,
   uploadClothingItem,
   getUploadStatus,
-  getQueueStatus
+  getQueueStatus,
+  getGlobalRateLimitStatus
 };
