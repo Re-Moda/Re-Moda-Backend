@@ -32,7 +32,7 @@ Example: "This is a soft, light blue cotton T-shirt with a classic crew neck and
   }
 }
 
-// 2. Generate a new image from the description using DALL·E 3
+// 2. Generate a new image from the description using DALL·E 3 and upload to S3
 async function generateStoreImage(description) {
   try {
     const response = await openai.images.generate({
@@ -43,7 +43,28 @@ async function generateStoreImage(description) {
       size: '1024x1024',
       response_format: 'url'
     });
-    return response.data[0].url;
+
+    const generatedImageUrl = response.data[0].url;
+    console.log('Generated DALL-E 3 URL:', generatedImageUrl);
+
+    // Download the image and upload to S3 to make it permanent
+    const axios = require('axios');
+    const imageRes = await axios.get(generatedImageUrl, { responseType: 'arraybuffer' });
+    
+    const s3Service = require('./s3Service');
+    const { v4: uuidv4 } = require('uuid');
+    const path = require('path');
+    
+    const file = {
+      originalname: `store-image-${uuidv4()}.png`,
+      buffer: Buffer.from(imageRes.data),
+      mimetype: 'image/png'
+    };
+    
+    const s3Url = await s3Service.uploadFileToS3(file);
+    console.log('Uploaded to S3:', s3Url);
+    
+    return s3Url; // Return the permanent S3 URL instead of temporary DALL-E URL
   } catch (error) {
     console.error('Error in generateStoreImage:', error);
     throw new Error('Failed to generate store image with DALL·E');
