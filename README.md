@@ -2,8 +2,6 @@
 
 A comprehensive fashion styling platform backend built with Node.js, Express, and Prisma. This powers the ReModa frontend application, providing AI-powered outfit generation, user management, and clothing item organization.
 
-## 🚀 Quick Start
-
 ### Prerequisites
 - Node.js 18.x or higher
 - PostgreSQL database
@@ -31,7 +29,7 @@ npx prisma db push
 npm run dev
 ```
 
-## 📋 Environment Variables
+## Environment Variables
 
 ```env
 # Database
@@ -54,7 +52,7 @@ PORT=3000
 NODE_ENV=development
 ```
 
-## 🗄️ Database Schema
+## Database Schema
 
 ### Core Models
 
@@ -160,7 +158,7 @@ model ChatMessage {
 }
 ```
 
-## 🔐 Authentication
+## Authentication
 
 All protected routes require JWT authentication via Bearer token in the Authorization header:
 
@@ -180,9 +178,9 @@ headers: {
 }
 ```
 
-## 📡 API Endpoints
+## API Endpoints
 
-### 🔐 Authentication Routes
+### Authentication Routes
 
 #### POST /auth/register
 Register a new user account.
@@ -441,7 +439,7 @@ Mark a clothing item as unused.
 }
 ```
 
-### 👗 Outfits Routes
+### Outfits Routes
 
 #### GET /outfits
 Get all outfits for the authenticated user.
@@ -743,7 +741,7 @@ Delete a chat session and all its messages.
 }
 ```
 
-### 🏥 Health Check Routes
+### Health Check Routes
 
 #### GET /health
 Check API health status.
@@ -757,7 +755,7 @@ Check API health status.
 }
 ```
 
-## 🔧 Error Handling
+## Error Handling
 
 ### Standard Error Response Format
 ```json
@@ -793,7 +791,7 @@ Check API health status.
 }
 ```
 
-## 🚀 Deployment
+## Deployment
 
 ### Render Deployment
 1. Connect your GitHub repository to Render
@@ -815,7 +813,7 @@ NODE_ENV=production
 PORT=3000
 ```
 
-## 🧪 Testing
+## Testing
 
 ### Run Tests
 ```bash
@@ -836,7 +834,7 @@ Import the provided Postman collection to test all endpoints:
 - AI features
 - Chat functionality
 
-## 📊 Monitoring & Logging
+## Monitoring & Logging
 
 ### Log Levels
 - `error` - Application errors
@@ -851,7 +849,7 @@ Import the provided Postman collection to test all endpoints:
 - Memory usage
 - Response times
 
-## 🔒 Security Features
+## Security Features
 
 ### JWT Token Security
 - Tokens expire after 24 hours
@@ -869,32 +867,3 @@ Import the provided Postman collection to test all endpoints:
 - Upload rate limiting
 - AI feature usage limits
 
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests for new functionality
-5. Submit a pull request
-
-### Code Style
-- Use ESLint configuration
-- Follow Prettier formatting
-- Write meaningful commit messages
-- Add JSDoc comments for functions
-
-## 📝 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🆘 Support
-
-For support and questions:
-- Create an issue on GitHub
-- Check the documentation
-- Review the API examples
-- Contact the development team
-
----
-
-**Built with ❤️ for the ReModa fashion platform**
