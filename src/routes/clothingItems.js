@@ -8,6 +8,9 @@ const upload = multer(); // memory storage
 
 // List all clothing items (with filters)
 router.get('/', authenticateToken, clothingItemController.getClothingItems);
+// Upload a new clothing item image (S3 + LLM tagging) - MUST BE BEFORE /:id routes
+router.post('/upload', authenticateToken, upload.single('image'), clothingItemController.uploadClothingItem);
+// Get specific clothing item
 router.get('/:id', authenticateToken, clothingItemController.getClothingItemById);
 // Edit clothing item (description, tags)
 router.patch('/:id', authenticateToken, clothingItemController.updateClothingItem);
@@ -15,7 +18,7 @@ router.patch('/:id', authenticateToken, clothingItemController.updateClothingIte
 router.delete('/:id', authenticateToken, clothingItemController.deleteClothingItem);
 // Increment wear count & set last_worn
 router.post('/:id/wear', authenticateToken, clothingItemController.wearClothingItem);
-// Upload a new clothing item image (S3 + LLM tagging)
-router.post('/upload', authenticateToken, upload.single('image'), clothingItemController.uploadClothingItem);
+// Mark item as unused
+router.patch('/:id/unused', authenticateToken, clothingItemController.markAsUnused);
 
 module.exports = router;

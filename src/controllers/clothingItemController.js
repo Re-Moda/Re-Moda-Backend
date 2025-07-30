@@ -44,6 +44,10 @@ async function getClothingItems(req, res) {
       category: item.category?.title || item.tag || item.category, // user-selected category
       tag: item.tag || item.category?.title || item.category,
       closetId: item.closet_id || (item.closet && item.closet.id),
+      is_unused: item.is_unused || false,
+      unused_at: item.unused_at,
+      wear_count: item.wear_count || 0,
+      last_worn_at: item.last_worn_at,
       // Add any other fields you want to expose
     }));
     res.json({ success: true, data: result });
@@ -169,6 +173,70 @@ async function wearClothingItem(req, res) {
   }
 }
 
+// Mark item as unused
+async function markAsUnused(req, res) {
+  try {
+    const { id } = req.params;
+    const userId = req.user.userId;
+
+    // Verify the item belongs to the user
+    const item = await prisma.clothingItem.findFirst({
+      where: {
+        id: parseInt(id),
+        closet: {
+          user_id: userId
+        }
+      },
+      include: {
+        category: true,
+        closet: true
+      }
+    });
+
+    if (!item) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Clothing item not found or does not belong to user.' 
+      });
+    }
+
+    // Mark item as unused
+    const updatedItem = await prisma.clothingItem.update({
+      where: { id: parseInt(id) },
+      data: {
+        is_unused: true,
+        unused_at: new Date()
+      },
+      include: {
+        category: true,
+        closet: true
+      }
+    });
+
+    res.json({
+      success: true,
+      data: {
+        id: updatedItem.id,
+        label: updatedItem.label,
+        category: updatedItem.category.title,
+        is_unused: updatedItem.is_unused,
+        unused_at: updatedItem.unused_at,
+        description: updatedItem.description,
+        image_key: updatedItem.image_key,
+        wear_count: updatedItem.wear_count,
+        last_worn_at: updatedItem.last_worn_at
+      },
+      message: 'Item marked as unused successfully'
+    });
+  } catch (error) {
+    console.error('Error in markAsUnused:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: error.message || 'Failed to mark item as unused.' 
+    });
+  }
+}
+
 
 
 module.exports = {
@@ -177,5 +245,6 @@ module.exports = {
   updateClothingItem,
   deleteClothingItem,
   wearClothingItem,
+  markAsUnused,
   uploadClothingItem
 };
