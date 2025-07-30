@@ -73,12 +73,21 @@ async function uploadClothingItem(req, res) {
     const aiDescription = await describeImage(originalImageUrl);
     // 3. Generate store-like image from description
     const generatedImageUrl = await generateStoreImage(aiDescription);
-    // 4. Save all info in DB
+    
+    // 4. Generate a proper label from the AI description if none provided
+    let itemLabel = label;
+    if (!itemLabel || itemLabel.trim() === '') {
+      // Extract a short name from the AI description
+      const shortName = aiDescription.split('.')[0].replace('This is a ', '').replace('This is ', '');
+      itemLabel = shortName || 'Clothing Item';
+    }
+    
+    // 5. Save all info in DB
     const item = await clothingItemService.createClothingItem({
       userId,
       closetId: closet.id,
       category: categoryRecord.id,
-      label: label || '',
+      label: itemLabel,
       description: aiDescription,
       originalImageUrl,
       generatedImageUrl,
@@ -89,12 +98,12 @@ async function uploadClothingItem(req, res) {
       data: {
         id: item.id,
         generatedImageUrl,
-        title: label || '',
+        title: itemLabel,
         tag: categoryRecord.title,
         description: aiDescription,
         originalImageUrl,
         closetId: closet.id,
-        label: label || '',
+        label: itemLabel,
         category: categoryRecord.id,
         dbItem: item
       }
