@@ -20,5 +20,9 @@ router.delete('/:id', authenticateToken, clothingItemController.deleteClothingIt
 router.post('/:id/wear', authenticateToken, clothingItemController.wearClothingItem);
 // Mark item as unused
 router.patch('/:id/unused', authenticateToken, clothingItemController.markAsUnused);
+// Get upload status
+router.get('/upload/status/:uploadId', authenticateToken, clothingItemController.getUploadStatus);
+// Get queue status
+router.get('/upload/queue-status', authenticateToken, clothingItemController.getQueueStatus);
 
 module.exports = router;
