@@ -28,7 +28,16 @@ Example: "This is a soft, light blue cotton T-shirt with a classic crew neck and
     return response.choices[0].message.content.trim();
   } catch (error) {
     console.error('Error in describeImage:', error);
-    throw new Error('Failed to describe image with LLM');
+    
+    if (error.response?.status === 429) {
+      throw new Error('OpenAI rate limit exceeded. Please try again in a few minutes.');
+    } else if (error.response?.status === 402) {
+      throw new Error('OpenAI quota exceeded. Please check your API credits.');
+    } else if (error.message && error.message.includes('quota')) {
+      throw new Error('OpenAI quota exceeded. Please check your API credits.');
+    }
+    
+    throw new Error('Failed to describe image with LLM: ' + error.message);
   }
 }
 
@@ -46,7 +55,16 @@ async function generateStoreImage(description) {
     return response.data[0].url;
   } catch (error) {
     console.error('Error in generateStoreImage:', error);
-    throw new Error('Failed to generate store image with DALL·E');
+    
+    if (error.response?.status === 429) {
+      throw new Error('OpenAI rate limit exceeded. Please try again in a few minutes.');
+    } else if (error.response?.status === 402) {
+      throw new Error('OpenAI quota exceeded. Please check your API credits.');
+    } else if (error.message && error.message.includes('quota')) {
+      throw new Error('OpenAI quota exceeded. Please check your API credits.');
+    }
+    
+    throw new Error('Failed to generate store image with DALL·E: ' + error.message);
   }
 }
 
