@@ -114,7 +114,25 @@ async function uploadClothingItem(req, res) {
     });
   } catch (error) {
     console.error('Error in uploadClothingItem:', error);
-    res.status(500).json({ success: false, message: error.message || 'Failed to process image or create item.' });
+    
+    // Provide more specific error messages based on the error
+    let errorMessage = 'Failed to process image or create item.';
+    
+    if (error.message && error.message.includes('rate limit')) {
+      errorMessage = 'API rate limit exceeded. Please try again in a few minutes.';
+    } else if (error.message && error.message.includes('quota')) {
+      errorMessage = 'API quota exceeded. Please try again later.';
+    } else if (error.message && error.message.includes('S3')) {
+      errorMessage = 'Image storage failed. Please try again.';
+    } else if (error.message && error.message.includes('OpenAI')) {
+      errorMessage = 'AI processing failed. Please try again.';
+    }
+    
+    res.status(500).json({ 
+      success: false, 
+      message: errorMessage,
+      details: error.message 
+    });
   }
 }
 
