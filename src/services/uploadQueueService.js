@@ -2,6 +2,7 @@ const { OpenAI } = require('openai');
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 const s3Service = require('./s3Service');
 const clothingItemService = require('./clothingItemService');
+const globalRateLimitService = require('./globalRateLimitService');
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
@@ -11,8 +12,6 @@ class UploadQueueService {
     this.isProcessing = false;
     this.rateLimitDelay = 12000; // 12 seconds between uploads (5 per minute)
     this.maxRetries = 3;
-    this.lastOpenAICall = 0; // Track last OpenAI API call
-    this.openAIMinInterval = 12000; // Minimum 12 seconds between OpenAI calls
   }
 
   // Add upload to queue
@@ -139,7 +138,7 @@ class UploadQueueService {
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
         // Rate limit check for OpenAI API
-        await this.waitForOpenAIRateLimit();
+        await this.waitForOpenAIRateLimit(queueItem.data.userId);
         
         const prompt = `
 Describe the clothing item in this image in 2-3 sentences. 
@@ -165,7 +164,6 @@ Example: "This is a soft, light blue cotton T-shirt with a classic crew neck and
           response_format: { type: 'text' },
         });
 
-        this.lastOpenAICall = Date.now();
         console.log(`✅ OpenAI GPT-4 Vision call successful`);
         return response.choices[0].message.content.trim();
 
@@ -197,7 +195,7 @@ Example: "This is a soft, light blue cotton T-shirt with a classic crew neck and
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
         // Rate limit check for OpenAI API
-        await this.waitForOpenAIRateLimit();
+        await this.waitForOpenAIRateLimit(queueItem.data.userId);
         
         console.log(`🔄 Calling OpenAI DALL-E 3 (attempt ${attempt}/${maxRetries})`);
         const response = await openai.images.generate({
@@ -212,7 +210,6 @@ Example: "This is a soft, light blue cotton T-shirt with a classic crew neck and
         const generatedImageUrl = response.data[0].url;
         console.log('Generated DALL-E 3 URL:', generatedImageUrl);
 
-        this.lastOpenAICall = Date.now();
         console.log(`✅ OpenAI DALL-E 3 call successful`);
 
         // Download and upload to S3
@@ -335,16 +332,17 @@ Example: "This is a soft, light blue cotton T-shirt with a classic crew neck and
     } : null;
   }
 
-  // Wait for OpenAI rate limit
-  async waitForOpenAIRateLimit() {
-    const now = Date.now();
-    const timeSinceLastCall = now - this.lastOpenAICall;
+  // Wait for global OpenAI rate limit
+  async waitForOpenAIRateLimit(userId) {
+    console.log(`🔄 Checking global rate limit for user ${userId}...`);
     
-    if (timeSinceLastCall < this.openAIMinInterval) {
-      const waitTime = this.openAIMinInterval - timeSinceLastCall;
-      console.log(`⏸️ Waiting ${waitTime}ms for OpenAI rate limit (${Math.round(waitTime/1000)}s)...`);
-      await this.delay(waitTime);
-    }
+    // Wait until we can make an OpenAI call
+    await globalRateLimitService.waitForOpenAICall();
+    
+    // Record the call
+    globalRateLimitService.recordOpenAICall(userId);
+    
+    console.log(`✅ Global rate limit: OpenAI call approved for user ${userId}`);
   }
 
   // Utility function for delays
