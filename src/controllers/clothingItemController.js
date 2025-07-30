@@ -1,6 +1,7 @@
 const { uploadFileToS3 } = require('../services/s3Service');
 const { describeImage, generateStoreImage } = require('../services/llmService');
 const clothingItemService = require('../services/clothingItemService');
+const uploadQueueService = require('../services/uploadQueueService');
 const prisma = require('../prismaClient');
 const axios = require('axios');
 
@@ -60,103 +61,45 @@ async function getClothingItems(req, res) {
 async function uploadClothingItem(req, res) {
   try {
     const userId = req.user.userId;
-    // Ensure user has a closet and categories
-    const { closet, categories } = await getOrCreateDefaultClosetAndCategories(userId);
-    // Use provided or default category
-    let category = req.body.category;
-    let categoryRecord = categories.find(cat => cat.title.toLowerCase() === (category || '').toLowerCase());
-    if (!categoryRecord) categoryRecord = categories[0];
 
     if (!req.file) {
       return res.status(400).json({ success: false, message: 'No file uploaded.' });
     }
+
     const { label, description } = req.body;
-    
-    console.log('Starting upload process for user:', userId);
+    const category = req.body.category || 'Top';
+
+    console.log('📤 Adding upload to queue for user:', userId);
     console.log('File received:', req.file ? 'Yes' : 'No');
-    
-    // 1. Upload original image to S3
-    console.log('Step 1: Uploading to S3...');
-    const originalImageUrl = await uploadFileToS3(req.file);
-    console.log('S3 upload successful:', originalImageUrl);
-    
-    // 2. Get description from GPT-4 Vision
-    console.log('Step 2: Getting AI description...');
-    const aiDescription = await describeImage(originalImageUrl);
-    console.log('AI description received:', aiDescription);
-    
-    // 3. Generate store-like image from description
-    console.log('Step 3: Generating store image...');
-    const generatedImageUrl = await generateStoreImage(aiDescription);
-    console.log('Store image generated:', generatedImageUrl);
-    
-    // 4. Generate a proper label from the AI description if none provided
-    let itemLabel = label;
-    if (!itemLabel || itemLabel.trim() === '') {
-      // Extract a short name from the AI description
-      const shortName = aiDescription.split('.')[0].replace('This is a ', '').replace('This is ', '');
-      itemLabel = shortName || 'Clothing Item';
-    }
-    
-    // 5. Save all info in DB
-    const item = await clothingItemService.createClothingItem({
+
+    // Add upload to queue
+    const uploadData = {
       userId,
-      closetId: closet.id,
-      category: categoryRecord.id,
-      label: itemLabel,
-      description: aiDescription,
-      originalImageUrl,
-      generatedImageUrl,
-      tag: categoryRecord.title,
-    });
-    res.status(201).json({
+      file: req.file,
+      category,
+      label,
+      description
+    };
+
+    const uploadId = await uploadQueueService.addToQueue(uploadData);
+
+    // Return immediate response with upload ID
+    res.status(202).json({
       success: true,
+      message: 'Upload queued successfully',
       data: {
-        id: item.id,
-        generatedImageUrl,
-        title: itemLabel,
-        tag: categoryRecord.title,
-        description: aiDescription,
-        originalImageUrl,
-        closetId: closet.id,
-        label: itemLabel,
-        category: categoryRecord.id,
-        dbItem: item
+        uploadId,
+        status: 'queued',
+        message: 'Your upload has been queued and will be processed shortly.'
       }
     });
+
   } catch (error) {
     console.error('Error in uploadClothingItem:', error);
-    console.error('Error stack:', error.stack);
-    
-    // Provide more specific error messages based on the error
-    let errorMessage = 'Failed to process image or create item.';
-    let errorStep = 'Unknown';
-    
-    if (error.message && error.message.includes('rate limit')) {
-      errorMessage = 'API rate limit exceeded. Please try again in a few minutes.';
-      errorStep = 'API Rate Limit';
-    } else if (error.message && error.message.includes('quota')) {
-      errorMessage = 'API quota exceeded. Please try again later.';
-      errorStep = 'API Quota';
-    } else if (error.message && error.message.includes('S3')) {
-      errorMessage = 'Image storage failed. Please try again.';
-      errorStep = 'S3 Upload';
-    } else if (error.message && error.message.includes('OpenAI')) {
-      errorMessage = 'AI processing failed. Please try again.';
-      errorStep = 'OpenAI API';
-    } else if (error.message && error.message.includes('describeImage')) {
-      errorMessage = 'Image analysis failed. Please try again.';
-      errorStep = 'Image Analysis';
-    } else if (error.message && error.message.includes('generateStoreImage')) {
-      errorMessage = 'Image generation failed. Please try again.';
-      errorStep = 'Image Generation';
-    }
-    
     res.status(500).json({ 
       success: false, 
-      message: errorMessage,
-      details: error.message,
-      step: errorStep
+      message: 'Failed to queue upload',
+      details: error.message
     });
   }
 }
@@ -282,6 +225,50 @@ async function markAsUnused(req, res) {
 
 
 
+// Get upload status
+async function getUploadStatus(req, res) {
+  try {
+    const { uploadId } = req.params;
+    const status = uploadQueueService.getUploadStatus(uploadId);
+    
+    if (!status) {
+      return res.status(404).json({
+        success: false,
+        message: 'Upload not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      data: status
+    });
+  } catch (error) {
+    console.error('Error getting upload status:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to get upload status'
+    });
+  }
+}
+
+// Get queue status
+async function getQueueStatus(req, res) {
+  try {
+    const status = uploadQueueService.getQueueStatus();
+    
+    res.json({
+      success: true,
+      data: status
+    });
+  } catch (error) {
+    console.error('Error getting queue status:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to get queue status'
+    });
+  }
+}
+
 module.exports = {
   getClothingItems,
   getClothingItemById,
@@ -289,5 +276,7 @@ module.exports = {
   deleteClothingItem,
   wearClothingItem,
   markAsUnused,
-  uploadClothingItem
+  uploadClothingItem,
+  getUploadStatus,
+  getQueueStatus
 };
