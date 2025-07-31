@@ -19,8 +19,8 @@ class GlobalRateLimitService {
       userId: userId
     });
 
-    console.log(`📊 Global rate limit: Recorded OpenAI call for user ${userId}`);
-    console.log(`📊 Global rate limit: Total calls in last minute: ${this.getRecentCallCount()}`);
+    console.log(`Global rate limit: Recorded OpenAI call for user ${userId}`);
+    console.log(`Global rate limit: Total calls in last minute: ${this.getRecentCallCount()}`);
   }
 
   // Get count of calls in the last minute
@@ -34,8 +34,8 @@ class GlobalRateLimitService {
     const recentCalls = this.getRecentCallCount();
     const canCall = recentCalls < this.maxCallsPerMinute;
     
-    console.log(`📊 Global rate limit: ${recentCalls}/${this.maxCallsPerMinute} calls in last minute`);
-    console.log(`📊 Global rate limit: Can make call: ${canCall}`);
+    console.log(`Global rate limit: ${recentCalls}/${this.maxCallsPerMinute} calls in last minute`);
+    console.log(`Global rate limit: Can make call: ${canCall}`);
     
     return canCall;
   }

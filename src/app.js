@@ -6,6 +6,9 @@ const app = express();
 app.use(cors({
   origin: [
     'http://localhost:5173',
+    'http://localhost:5174',
+    'http://localhost:3000',
+    'http://localhost:3001',
     'https://my-remoda.com',
     'https://www.my-remoda.com',
     'https://deploy-preview-13--re-moda-frontend.netlify.app',

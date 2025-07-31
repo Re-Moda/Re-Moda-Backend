@@ -113,7 +113,7 @@ model OutfitClothingItem {
   clothingItem     ClothingItem @relation(fields: [clothing_item_id], references: [id])
 
   @@id([outfit_id, clothing_item_id])
-}
+  }
 
 model ChatSession {
   id         Int      @id @default(autoincrement())

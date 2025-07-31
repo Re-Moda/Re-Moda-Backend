@@ -6,7 +6,7 @@ const prisma = new PrismaClient();
 async function analyzeWardrobe(req, res) {
   try {
     const userId = req.user.userId;
-    console.log(`📊 Wardrobe analysis requested for user ${userId}`);
+    console.log(`Wardrobe analysis requested for user ${userId}`);
 
     // Create MCP session
     const session = await mcpService.createMCPSession(userId, {

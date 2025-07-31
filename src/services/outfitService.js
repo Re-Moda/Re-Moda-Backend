@@ -67,15 +67,15 @@ const createOutfit = async (userId, outfitData) => {
     }
     
     const outfitDataToCreate = {
-      user_id: userId,
-      title,
-      is_favorite,
-      is_recurring,
-      outfitClothingItems: {
-        create: clothingItemIds.map(itemId => ({
-          clothing_item_id: itemId
-        }))
-      }
+        user_id: userId,
+        title,
+        is_favorite,
+        is_recurring,
+        outfitClothingItems: {
+          create: clothingItemIds.map(itemId => ({
+            clothing_item_id: itemId
+          }))
+        }
     };
     
     // Only add image fields if they are provided

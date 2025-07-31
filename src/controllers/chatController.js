@@ -89,9 +89,30 @@ const getSessionMessages = async (req, res) => {
       }
     });
 
+    // Parse JSON messages for display
+    const parsedMessages = messages.map(message => {
+      let parsedContent = message.content;
+      
+      // Try to parse JSON content (for welcome messages)
+      try {
+        const jsonContent = JSON.parse(message.content);
+        if (jsonContent.type === 'welcome' && jsonContent.content) {
+          parsedContent = jsonContent.content;
+        }
+      } catch (e) {
+        // If not JSON, use content as-is
+        parsedContent = message.content;
+      }
+      
+      return {
+        ...message,
+        content: parsedContent
+      };
+    });
+
     res.status(200).json({
       success: true,
-      data: messages
+      data: parsedMessages
     });
   } catch (error) {
     console.error('Error getting session messages:', error);
@@ -139,6 +160,53 @@ const deleteChatSession = async (req, res) => {
     res.status(500).json({
       success: false,
       message: error.message || "Failed to delete chat session"
+    });
+  }
+};
+
+// Clear chat session (save current and start new)
+const clearChatSession = async (req, res) => {
+  try {
+    const { sessionId } = req.params;
+    const userId = req.user.userId;
+    
+    // Verify session belongs to user
+    const session = await prisma.chatSession.findFirst({
+      where: {
+        id: parseInt(sessionId),
+        user_id: userId
+      }
+    });
+    
+    if (!session) {
+      return res.status(404).json({
+        success: false,
+        message: "Chat session not found"
+      });
+    }
+
+    // Create a new chat session
+    const newSession = await chatService.createChatSession(userId);
+    
+    // Add welcome message to new session
+    await chatService.addMessage(newSession.id, 'assistant', JSON.stringify({
+      type: 'welcome',
+      content: "Hi! I'm your personal fashion AI stylist. I can help you find the perfect outfit for any occasion. What are you looking for today?"
+    }));
+
+    res.status(200).json({
+      success: true,
+      data: {
+        oldSessionId: parseInt(sessionId),
+        newSessionId: newSession.id,
+        message: "Chat cleared and new session started"
+      }
+    });
+  } catch (error) {
+    console.error('Error clearing chat session:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || "Failed to clear chat session"
     });
   }
 };
@@ -290,6 +358,7 @@ module.exports = {
   getChatSession,
   getSessionMessages,
   deleteChatSession,
+  clearChatSession,
   sendMessage,
   createOutfitFromRecommendation,
   getUserChatSessions

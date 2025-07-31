@@ -3,14 +3,14 @@ const prisma = require('../prismaClient');
 async function createUser({ email, username, password_hash, security_question, security_answer_hash }) {
   try {
     return await prisma.user.create({
-      data: {
-        email,
-        username,
-        password_hash,
-        security_question,
-        security_answer_hash,
-      },
-    });
+    data: {
+      email,
+      username,
+      password_hash,
+      security_question,
+      security_answer_hash,
+    },
+  });
   } catch (error) {
     console.error('Error in createUser:', error);
     throw new Error('Failed to create user');
@@ -47,8 +47,8 @@ async function findUserById(id) {
 async function updateUserPassword(id, password_hash) {
   try {
     return await prisma.user.update({
-      where: { id },
-      data: { password_hash }
+    where: { id },
+    data: { password_hash }
     });
   } catch (error) {
     console.error('Error in updateUserPassword:', error);
@@ -59,8 +59,8 @@ async function updateUserPassword(id, password_hash) {
 async function updateUser(id, updateData) {
   try {
     return await prisma.user.update({
-      where: { id },
-      data: updateData 
+    where: { id },
+    data: updateData 
     });
   } catch (error) {
     console.error('Error in updateUser:', error);
