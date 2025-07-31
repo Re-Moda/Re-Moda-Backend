@@ -3,11 +3,11 @@ const { uploadFileToS3 } = require('../services/s3Service');
 const prisma = require('../prismaClient');
 
 async function me(req, res) {  // user can only access their own info - using user id from jwt token in middleware
-  try {
-    const user = await authService.findUserById(req.user.userId);  // req.user is set by JWT middleware & contains userId 
-    if (!user) {
+    try {
+        const user = await authService.findUserById(req.user.userId);  // req.user is set by JWT middleware & contains userId 
+        if (!user) {
       return res.status(404).json({ success: false, message: 'User not found.' });
-    }
+        }
     res.json({
       success: true,
       data: {
@@ -58,10 +58,10 @@ async function getUploadCount(req, res) {
         hasMetMinimum: uploadCount >= 4
       }
     });
-  } catch (error) {
+    } catch (error) {
     console.error('Error in getUploadCount:', error);
     res.status(500).json({ success: false, message: 'Failed to get upload count.' });
-  }
+    }
 }
 
 // Get user's coin balance
@@ -136,10 +136,10 @@ async function addCoins(req, res) {
         added_amount: amount
       }
     });
-  } catch (error) {
+    } catch (error) {
     console.error('Error in addCoins:', error);
     res.status(500).json({ success: false, message: 'Failed to add coins.' });
-  }
+    }
 }
 
 // Spend coins from user's balance
@@ -211,7 +211,7 @@ async function getUserById(req, res) {  // admin-only
   } catch (error) {
     console.error('Error in getUserById:', error);
     res.status(500).json({ success: false, message: 'Server error.' });
-  }
+    }
 }
 
 async function updateUser(req, res) {  // admin-only
