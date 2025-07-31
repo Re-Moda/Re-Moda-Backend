@@ -76,8 +76,17 @@ async function updateClothingItem(id, data) {
 
 async function deleteClothingItem(id) {
   try {
-    await prisma.clothingItem.delete({ where: { id: Number(id) } });
-    return { success: true, message: 'Clothing item deleted' };
+    // First, delete any related outfit-clothing item associations
+    await prisma.outfitClothingItem.deleteMany({
+      where: { clothing_item_id: Number(id) }
+    });
+    
+    // Then delete the clothing item itself
+    await prisma.clothingItem.delete({ 
+      where: { id: Number(id) } 
+    });
+    
+    return { success: true, message: 'Clothing item deleted successfully' };
   } catch (error) {
     console.error('Error in deleteClothingItem:', error);
     throw new Error('Failed to delete clothing item');

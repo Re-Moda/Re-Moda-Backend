@@ -126,10 +126,46 @@ async function updateClothingItem(req, res) {
 
 async function deleteClothingItem(req, res) {
   try {
-    const result = await clothingItemService.deleteClothingItem(Number(req.params.id));
-    res.json(result);
+    const { id } = req.params;
+    const userId = req.user.userId;
+
+    // Verify the item belongs to the user
+    const item = await prisma.clothingItem.findFirst({
+      where: {
+        id: parseInt(id),
+        closet: {
+          user_id: userId
+        }
+      },
+      include: {
+        category: true,
+        closet: true
+      }
+    });
+
+    if (!item) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Clothing item not found or does not belong to user.' 
+      });
+    }
+
+    // Delete the clothing item (this will cascade to related records)
+    const result = await clothingItemService.deleteClothingItem(parseInt(id));
+    
+    res.json({
+      success: true,
+      data: {
+        id: parseInt(id),
+        message: 'Clothing item donated to thrift store successfully'
+      }
+    });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message || 'Failed to delete clothing item.' });
+    console.error('Error in deleteClothingItem:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: error.message || 'Failed to delete clothing item.' 
+    });
   }
 }
 
