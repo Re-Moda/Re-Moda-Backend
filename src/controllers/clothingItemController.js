@@ -224,6 +224,78 @@ async function markAsUnused(req, res) {
   }
 }
 
+// Move item back to closet from unused
+async function restoreToCloset(req, res) {
+  try {
+    const { id } = req.params;
+    const userId = req.user.userId;
+
+    // Verify the item belongs to the user
+    const item = await prisma.clothingItem.findFirst({
+      where: {
+        id: parseInt(id),
+        closet: {
+          user_id: userId
+        }
+      },
+      include: {
+        category: true,
+        closet: true
+      }
+    });
+
+    if (!item) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Clothing item not found or does not belong to user.' 
+      });
+    }
+
+    // Check if item is actually unused
+    if (!item.is_unused) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Item is not in unused state.' 
+      });
+    }
+
+    // Move item back to closet (mark as not unused)
+    const updatedItem = await prisma.clothingItem.update({
+      where: { id: parseInt(id) },
+      data: {
+        is_unused: false,
+        unused_at: null
+      },
+      include: {
+        category: true,
+        closet: true
+      }
+    });
+
+    res.json({
+      success: true,
+      data: {
+        id: updatedItem.id,
+        label: updatedItem.label,
+        category: updatedItem.category.title,
+        is_unused: updatedItem.is_unused,
+        unused_at: updatedItem.unused_at,
+        description: updatedItem.description,
+        image_key: updatedItem.image_key,
+        wear_count: updatedItem.wear_count,
+        last_worn_at: updatedItem.last_worn_at
+      },
+      message: 'Item restored to closet successfully'
+    });
+  } catch (error) {
+    console.error('Error in restoreToCloset:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: error.message || 'Failed to restore item to closet.' 
+    });
+  }
+}
+
 
 
 // Get upload status
@@ -299,6 +371,7 @@ module.exports = {
   deleteClothingItem,
   wearClothingItem,
   markAsUnused,
+  restoreToCloset,
   uploadClothingItem,
   getUploadStatus,
   getQueueStatus,

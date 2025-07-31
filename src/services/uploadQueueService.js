@@ -292,12 +292,18 @@ Example: "This is a soft, light blue cotton T-shirt with a classic crew neck and
 
     for (const title of defaultCategories) {
       let category = await prisma.category.findFirst({
-        where: { title }
+        where: { 
+          title,
+          user_id: userId
+        }
       });
 
       if (!category) {
         category = await prisma.category.create({
-          data: { title }
+          data: { 
+            title,
+            user_id: userId
+          }
         });
       }
 

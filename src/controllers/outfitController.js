@@ -234,8 +234,8 @@ const removeItemFromOutfit = async (req, res) => {
         message: "Outfit or item not found"
       });
     }
-    const message = result.outfitDeleted
-      ? "Item removed and outfit deleted (was empty)"
+    const message = result.outfitDeleted 
+      ? "Item removed and outfit deleted (was empty)" 
       : "Item removed from outfit successfully";
     res.status(200).json({
       success: true,

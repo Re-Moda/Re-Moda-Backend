@@ -24,4 +24,7 @@ router.post('/sessions/:sessionId/outfits', authenticateToken, chatController.cr
 // Delete chat session
 router.delete('/sessions/:sessionId', authenticateToken, chatController.deleteChatSession);
 
+// Clear chat (save current session and start new one)
+router.post('/sessions/:sessionId/clear', authenticateToken, chatController.clearChatSession);
+
 module.exports = router;
