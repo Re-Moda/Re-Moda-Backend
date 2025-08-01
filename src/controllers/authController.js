@@ -9,6 +9,15 @@ async function signup(req, res) {
   if (!email || !username || !password || !security_question || !security_answer) {
       return res.status(400).json({ success: false, message: 'All fields are required.' });
   }
+  
+  // Try to fix database schema if needed
+  try {
+    const { fixDatabaseSchema } = require('../utils/databaseFix');
+    await fixDatabaseSchema();
+  } catch (fixError) {
+    console.log('Database fix attempted but failed:', fixError.message);
+  }
+  
   if (await authService.findUserByEmail(email) || await authService.findUserByUsername(username)) {
       return res.status(409).json({ success: false, message: 'Email or username already in use.' });
   }
