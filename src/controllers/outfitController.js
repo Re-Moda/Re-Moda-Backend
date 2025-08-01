@@ -427,31 +427,27 @@ const generateAvatarWithOutfit = async (req, res) => {
     console.log('Generating avatar with outfit using DALL-E 3...');
     
     const prompt = `
-Generate a full-body image of a single person with the following characteristics: ${avatarDescription}. 
+A person with these exact characteristics: ${avatarDescription}. The person is wearing ${top.description} on top, ${bottom.description} on bottom, and ${shoes ? `${shoes.description} on their feet` : `barefoot`}. The clothing fits perfectly on the person's body.
 
-This must be a single, consistent avatar — no variation is allowed. The person must be shown fully from head to toe, centered in the frame, standing in a perfectly straight pose with both arms naturally at their sides. Do not tilt, turn, or angle the body in any direction — the avatar must face directly forward with a symmetrical, upright stance.
+MANDATORY REQUIREMENTS (do NOT ignore any):
+- Show ONLY one person. Absolutely do not generate multiple people, multiple views, mirrored versions, reflections, or background figures.
+- The person must be shown COMPLETELY from head to toe. The top of the head and both feet must be fully visible in the frame. Do NOT crop, zoom, or cut off any part of the head, body, or feet. No close-ups.
+- Center the person in the image, standing upright and facing directly forward. Do NOT tilt, turn, or angle the body. No creative camera angles.
+- The pose, body type, facial features, skin tone, and gender must EXACTLY match the avatar description provided. Do NOT change gender, facial structure, proportions, or skin color. Do NOT beautify or stylize.
+- The person must be bald. No hair should be visible. No eyebrows unless described.
+- The result should look like a neutral mannequin-style avatar, not a photorealistic human, not a fashion model, not a fashion illustration, not a 3D render.
+- No props, accessories, or background objects unless described. Only a plain white background.
 
-⚠️ Do not crop, zoom, or cut off any part of the body. The top of the head and both feet must be completely visible. Do not show the person from the shoulders up. Do not generate close-ups.
+STYLE & LIGHTING:
+- Use flat, even, soft lighting as in a technical clothing catalog. No shadows, no reflections, no dramatic lighting, no backlight.
+- Clothing must appear matte unless otherwise specified in the clothing description.
 
-⚠️ Do not generate multiple views, mirrored versions, or duplicates of the avatar. Only one avatar may appear in the image. No side-by-side, no reflections, no background figures.
+STRICTLY PROHIBITED:
+- No photorealistic effects, no 3D effects, no stylized filters, no creative or artistic edits.
+- No cropping, no zoom, no close-ups, no side-by-side figures, no duplicated avatars, no background people, no mirrors, no extra figures, no multiple poses.
 
-The person is bald and must look *exactly* like the avatar described — same build, facial structure, skin tone, and proportions. Do not alter or beautify any feature.
-
-The person is wearing:
-- ${top.description} on top
-- ${bottom.description} on bottom
-- ${shoes ? `${shoes.description} on feet` : `barefoot`}
-
-The outfit must fit naturally on the body, with fabric rendered as flat and matte unless otherwise specified. Do not stylize, distort, or enhance the clothing. No accessories unless explicitly described.
-
-Style and lighting instructions:
-- Use soft, even lighting like a clean catalog photo
-- Plain white background — no textures, objects, or props
-- The result must resemble a technical mannequin reference used for fashion try-on
-- No stylized filters, surreal effects, or photo editing
-- No background distractions, shadows, or artistic touches
-
-✅ Final output: A neutral, realistic, standardized avatar shown head-to-toe in one consistent pose to clearly display the outfit for virtual try-on.
+FINAL OUTPUT:
+A single, consistent, mannequin-style avatar, shown from head to toe, centered, and fully visible in a neutral pose, wearing the specified outfit, with NO deviations from these requirements.
 `;
 
     console.log('DALL-E 3 prompt:', prompt);
@@ -603,28 +599,27 @@ const buildYourOwnOutfit = async (req, res) => {
     console.log('Generating avatar with outfit using DALL-E 3...');
     
     const dallePrompt = `
-Generate a full-body image of a single person with the following characteristics: ${avatarDescription}.
+A person with these exact characteristics: ${avatarDescription}. The person is wearing ${outfitDescription}. The clothing fits perfectly on the person's body.
 
-This must be a single, consistent avatar — no variation is allowed. The person must be shown fully from head to toe, centered in the frame, standing in a perfectly straight pose with both arms naturally at their sides. Do not tilt, turn, or angle the body in any direction — the avatar must face directly forward with a symmetrical, upright stance.
+MANDATORY REQUIREMENTS (do NOT ignore any):
+- Show ONLY one person. Absolutely do not generate multiple people, multiple views, mirrored versions, reflections, or background figures.
+- The person must be shown COMPLETELY from head to toe. The top of the head and both feet must be fully visible in the frame. Do NOT crop, zoom, or cut off any part of the head, body, or feet. No close-ups.
+- Center the person in the image, standing upright and facing directly forward. Do NOT tilt, turn, or angle the body. No creative camera angles.
+- The pose, body type, facial features, skin tone, and gender must EXACTLY match the avatar description provided. Do NOT change gender, facial structure, proportions, or skin color. Do NOT beautify or stylize.
+- The person must be bald. No hair should be visible. No eyebrows unless described.
+- The result should look like a neutral mannequin-style avatar, not a photorealistic human, not a fashion model, not a fashion illustration, not a 3D render.
+- No props, accessories, or background objects unless described. Only a plain white background.
 
-⚠️ Do not crop, zoom, or cut off any part of the body. The top of the head and both feet must be completely visible. Do not show the person from the shoulders up. Do not generate close-ups.
+STYLE & LIGHTING:
+- Use flat, even, soft lighting as in a technical clothing catalog. No shadows, no reflections, no dramatic lighting, no backlight.
+- Clothing must appear matte unless otherwise specified in the clothing description.
 
-⚠️ Do not generate multiple views, mirrored versions, or duplicates of the avatar. Only one avatar may appear in the image. No side-by-side, no reflections, no background figures.
+STRICTLY PROHIBITED:
+- No photorealistic effects, no 3D effects, no stylized filters, no creative or artistic edits.
+- No cropping, no zoom, no close-ups, no side-by-side figures, no duplicated avatars, no background people, no mirrors, no extra figures, no multiple poses.
 
-The person is bald and must look *exactly* like the avatar described — same build, facial structure, skin tone, and proportions. Do not alter or beautify any feature.
-
-The person is wearing: ${outfitDescription}
-
-The outfit must fit naturally on the body, with fabric rendered as flat and matte unless otherwise specified. Do not stylize, distort, or enhance the clothing. No accessories unless explicitly described.
-
-Style and lighting instructions:
-- Use soft, even lighting like a clean catalog photo
-- Plain white background — no textures, objects, or props
-- The result must resemble a technical mannequin reference used for fashion try-on
-- No stylized filters, surreal effects, or photo editing
-- No background distractions, shadows, or artistic touches
-
-✅ Final output: A neutral, realistic, standardized avatar shown head-to-toe in one consistent pose to clearly display the outfit for virtual try-on.
+FINAL OUTPUT:
+A single, consistent, mannequin-style avatar, shown from head to toe, centered, and fully visible in a neutral pose, wearing the specified outfit, with NO deviations from these requirements.
 `;
 
     console.log('DALL-E 3 prompt:', dallePrompt);
