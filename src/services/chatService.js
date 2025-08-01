@@ -98,12 +98,16 @@ Respond with ONLY a JSON object:
 
 Examples:
 - "hello" → needsOutfitHelp: false
+- "hi" → needsOutfitHelp: false
+- "hey" → needsOutfitHelp: false
 - "I need an outfit for a job interview" → needsOutfitHelp: true
 - "What should I wear to a wedding?" → needsOutfitHelp: true
 - "How are you?" → needsOutfitHelp: false
 - "I want to look good for a date" → needsOutfitHelp: true
 - "Can you help me?" → needsOutfitHelp: false (too vague)
-- "Show me some outfits" → needsOutfitHelp: true`;
+- "Show me some outfits" → needsOutfitHelp: true
+- "What should I wear?" → needsOutfitHelp: true
+- "Help me pick an outfit" → needsOutfitHelp: true`;
 
     const response = await openai.chat.completions.create({
       model: 'gpt-4o',
@@ -148,6 +152,7 @@ const generateOutfitRecommendations = async (userId, userRequest, sessionId) => 
       // Check if user said "hi" or similar greetings
       const userMessage = userRequest.toLowerCase().trim();
       console.log('Checking for greeting:', userMessage);
+      console.log('Intent analysis result:', intent);
       
       if (userMessage === 'hi' || userMessage === 'hello' || userMessage === 'hey') {
         console.log('Greeting detected, sending prompt options');
