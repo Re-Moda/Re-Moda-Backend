@@ -255,8 +255,33 @@ Example: "This is a soft, light blue cotton T-shirt with a classic crew neck and
     // Get or create closet and categories
     const { closet, categories } = await this.getOrCreateDefaultClosetAndCategories(userId);
     
-    let categoryRecord = categories.find(cat => cat.title.toLowerCase() === (category || '').toLowerCase());
-    if (!categoryRecord) categoryRecord = categories[0];
+    // Improved category matching logic
+    let categoryRecord = null;
+    const categoryLower = (category || '').toLowerCase();
+    
+    // First try exact match
+    categoryRecord = categories.find(cat => cat.title.toLowerCase() === categoryLower);
+    
+    // If no exact match, try fuzzy matching
+    if (!categoryRecord) {
+      if (categoryLower.includes('shoe') || categoryLower.includes('footwear') || categoryLower.includes('sneaker') || categoryLower.includes('heel') || categoryLower.includes('boot')) {
+        categoryRecord = categories.find(cat => cat.title.toLowerCase() === 'shoes');
+      } else if (categoryLower.includes('top') || categoryLower.includes('shirt') || categoryLower.includes('blouse') || categoryLower.includes('sweater') || categoryLower.includes('jacket')) {
+        categoryRecord = categories.find(cat => cat.title.toLowerCase() === 'top');
+      } else if (categoryLower.includes('bottom') || categoryLower.includes('pant') || categoryLower.includes('jean') || categoryLower.includes('skirt') || categoryLower.includes('short')) {
+        categoryRecord = categories.find(cat => cat.title.toLowerCase() === 'bottom');
+      } else if (categoryLower.includes('accessory') || categoryLower.includes('jewelry') || categoryLower.includes('bag') || categoryLower.includes('hat')) {
+        categoryRecord = categories.find(cat => cat.title.toLowerCase() === 'accessories');
+      }
+    }
+    
+    // If still no match, default to first category (Top)
+    if (!categoryRecord) {
+      console.log(`⚠️ No category match found for "${category}", defaulting to Top`);
+      categoryRecord = categories[0];
+    }
+
+    console.log(`✅ Category assigned: ${categoryRecord.title} for item: ${label}`);
 
     return await clothingItemService.createClothingItem({
       userId,
