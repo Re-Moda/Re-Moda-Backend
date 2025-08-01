@@ -12,6 +12,9 @@ router.post('/', authenticateToken, outfitController.createOutfit);
 // Add this route for generating avatar with outfit
 router.post('/generate-avatar', authenticateToken, outfitController.generateAvatarWithOutfit);
 
+// Build your own outfit with multiple clothing items
+router.post('/build-your-own', authenticateToken, outfitController.buildYourOwnOutfit);
+
 // Gets details for a specific outfit
 router.get('/:id', authenticateToken, outfitController.getOutfitById);
 

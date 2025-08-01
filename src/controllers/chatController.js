@@ -11,7 +11,7 @@ const startChatSession = async (req, res) => {
     // Add welcome message
     await chatService.addMessage(session.id, 'assistant', JSON.stringify({
       type: 'welcome',
-      content: "Hi! I'm your personal fashion AI stylist. I can help you find the perfect outfit for any occasion. What are you looking for today?"
+      content: "Hi! Welcome to Re:Moda by TechStyles! I am your StyleForce assistant. I can help you find the perfect outfit for any occasion. What are you looking for today?"
     }));
 
     res.status(201).json({
@@ -93,11 +93,14 @@ const getSessionMessages = async (req, res) => {
     const parsedMessages = messages.map(message => {
       let parsedContent = message.content;
       
-      // Try to parse JSON content (for welcome messages)
+      // Try to parse JSON content (for welcome messages and prompt options)
       try {
         const jsonContent = JSON.parse(message.content);
         if (jsonContent.type === 'welcome' && jsonContent.content) {
           parsedContent = jsonContent.content;
+        } else if (jsonContent.type === 'promptOptions') {
+          // Keep the JSON structure for prompt options so frontend can handle it
+          parsedContent = message.content;
         }
       } catch (e) {
         // If not JSON, use content as-is
@@ -191,7 +194,7 @@ const clearChatSession = async (req, res) => {
     // Add welcome message to new session
     await chatService.addMessage(newSession.id, 'assistant', JSON.stringify({
       type: 'welcome',
-      content: "Hi! I'm your personal fashion AI stylist. I can help you find the perfect outfit for any occasion. What are you looking for today?"
+      content: "Hi! Welcome to Re:Moda by TechStyles! I am your StyleForce assistant. I can help you find the perfect outfit for any occasion. What are you looking for today?"
     }));
 
     res.status(200).json({

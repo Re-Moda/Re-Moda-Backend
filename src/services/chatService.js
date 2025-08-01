@@ -142,8 +142,30 @@ const generateOutfitRecommendations = async (userId, userRequest, sessionId) => 
     
     // First, analyze if the user actually needs outfit help
     const intent = await analyzeUserIntent(userRequest);
+    console.log('Intent analysis result:', intent);
     
     if (!intent.needsOutfitHelp) {
+      // Check if user said "hi" or similar greetings
+      const userMessage = userRequest.toLowerCase().trim();
+      console.log('Checking for greeting:', userMessage);
+      
+      if (userMessage === 'hi' || userMessage === 'hello' || userMessage === 'hey') {
+        console.log('Greeting detected, sending prompt options');
+        // Return clickable outfit suggestions
+        const promptResponse = JSON.stringify({
+          type: 'promptOptions',
+          content: "Welcome back! Ready to style something today? Here are a few ideas to get started:",
+          suggestions: [
+            "I need an outfit for a summer trip",
+            "Help me style a blazer", 
+            "I want to look confident for a presentation"
+          ]
+        });
+        
+        await addMessage(sessionId, 'assistant', promptResponse);
+        return null; // No outfit recommendations needed
+      }
+      
       // User doesn't need outfit help, return a helpful response instead
       const helpfulResponse = `I'm here to help you with fashion and outfit advice! Try asking me things like:
       
