@@ -176,9 +176,97 @@ async function getDonationSuggestions(req, res) {
   }
 }
 
+// POST /mcp/move-old-items
+async function moveOldItems(req, res) {
+  try {
+    const userId = req.user.userId;
+    const { months = 3 } = req.body;
+
+    console.log(`📅 Moving items not worn in ${months} months for user ${userId}`);
+
+    const result = await mcpService.moveOldItems(userId, months);
+
+    res.json({
+      success: true,
+      message: result.message,
+      count: result.count,
+      movedItems: result.movedItems
+    });
+
+  } catch (error) {
+    console.error('Error in moveOldItems:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Failed to move old items'
+    });
+  }
+}
+
+// POST /mcp/move-low-wear-items
+async function moveLowWearItems(req, res) {
+  try {
+    const userId = req.user.userId;
+    const { maxWearCount = 3 } = req.body;
+
+    console.log(`📊 Moving items with wear count <= ${maxWearCount} for user ${userId}`);
+
+    const result = await mcpService.moveLowWearItems(userId, maxWearCount);
+
+    res.json({
+      success: true,
+      message: result.message,
+      count: result.count,
+      movedItems: result.movedItems
+    });
+
+  } catch (error) {
+    console.error('Error in moveLowWearItems:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Failed to move low wear items'
+    });
+  }
+}
+
+// POST /mcp/move-item-by-description
+async function moveItemByDescription(req, res) {
+  try {
+    const userId = req.user.userId;
+    const { description } = req.body;
+
+    if (!description) {
+      return res.status(400).json({
+        success: false,
+        message: 'Description is required'
+      });
+    }
+
+    console.log(`🔍 Moving item by description: "${description}" for user ${userId}`);
+
+    const result = await mcpService.moveItemByDescription(userId, description);
+
+    res.json({
+      success: true,
+      message: result.message,
+      count: result.count,
+      movedItems: result.movedItems
+    });
+
+  } catch (error) {
+    console.error('Error in moveItemByDescription:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Failed to move item by description'
+    });
+  }
+}
+
 module.exports = {
   analyzeWardrobe,
   markItemsAsUnused,
   getUnusedItems,
-  getDonationSuggestions
+  getDonationSuggestions,
+  moveOldItems,
+  moveLowWearItems,
+  moveItemByDescription
 };

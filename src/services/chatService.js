@@ -175,6 +175,72 @@ const generateOutfitRecommendations = async (userId, userRequest, sessionId) => 
         return null; // No outfit recommendations needed
       }
       
+      // Check for wardrobe management commands
+      if (userMessage.includes('move') && userMessage.includes('unused')) {
+        // Handle wardrobe management commands
+        let response = '';
+        
+        // Check for specific commands
+        if (userMessage.includes('past') && userMessage.includes('month')) {
+          // Extract number of months
+          const monthMatch = userMessage.match(/(\d+)\s*month/);
+          const months = monthMatch ? parseInt(monthMatch[1]) : 3;
+          
+          try {
+            // Call the MCP service directly
+            const mcpService = require('./mcpService');
+            const result = await mcpService.moveOldItems(userId, months);
+            
+            response = `✅ ${result.message}`;
+          } catch (error) {
+            response = `❌ Failed to move old items: ${error.message}`;
+          }
+        } else if (userMessage.includes('low') && userMessage.includes('wear')) {
+          // Extract wear count
+          const wearMatch = userMessage.match(/(\d+)\s*wear/);
+          const maxWear = wearMatch ? parseInt(wearMatch[1]) : 3;
+          
+          try {
+            const mcpService = require('./mcpService');
+            const result = await mcpService.moveLowWearItems(userId, maxWear);
+            
+            response = `✅ ${result.message}`;
+          } catch (error) {
+            response = `❌ Failed to move low wear items: ${error.message}`;
+          }
+        } else if (userMessage.includes('blue') || userMessage.includes('shirt') || userMessage.includes('item')) {
+          // Extract item description
+          const itemMatch = userMessage.match(/move\s+(.*?)\s+to\s+unused/i);
+          const description = itemMatch ? itemMatch[1].trim() : 'item';
+          
+          try {
+            const mcpService = require('./mcpService');
+            const result = await mcpService.moveItemByDescription(userId, description);
+            
+            response = `✅ ${result.message}`;
+          } catch (error) {
+            response = `❌ Failed to move item: ${error.message}`;
+          }
+        } else {
+          // Generic wardrobe management response
+          response = `I understand you want to manage your wardrobe! Here are some things I can help you with:
+
+• **Analyze your wardrobe** - I can analyze your clothing items and suggest what to keep or donate
+• **Find unused items** - I can identify items you haven't worn recently
+• **Batch operations** - I can help move multiple items at once
+
+Would you like me to:
+1. Analyze your wardrobe for donation suggestions?
+2. Find items you haven't worn in the past 3 months?
+3. Show you items with low wear counts?
+
+Just let me know what you'd like to do! 😊`;
+        }
+
+        await addMessage(sessionId, 'assistant', response);
+        return null;
+      }
+      
       // User doesn't need outfit help, return a helpful response instead
       const helpfulResponse = `Hi! I'm your personal AI stylist. I can help you create amazing outfits from your wardrobe! 
 
