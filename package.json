@@ -7,7 +7,7 @@
     "start": "node server.js",
     "dev": "node server.js",
     "build": "npm install",
-    "postinstall": "npx prisma generate",
+    "postinstall": "npx prisma generate && node src/utils/databaseFix.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "devDependencies": {
