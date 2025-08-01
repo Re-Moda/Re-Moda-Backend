@@ -243,7 +243,7 @@ const sendMessage = async (req, res) => {
       return res.status(200).json({
         success: true,
         data: {
-          message: "Helpful response provided",
+          message: "Message processed successfully",
           recommendations: null
         }
       });
