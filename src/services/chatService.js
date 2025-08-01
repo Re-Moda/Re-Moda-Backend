@@ -100,6 +100,8 @@ Examples:
 - "hello" → needsOutfitHelp: false
 - "hi" → needsOutfitHelp: false
 - "hey" → needsOutfitHelp: false
+- "HI" → needsOutfitHelp: false
+- "Hello" → needsOutfitHelp: false
 - "I need an outfit for a job interview" → needsOutfitHelp: true
 - "What should I wear to a wedding?" → needsOutfitHelp: true
 - "How are you?" → needsOutfitHelp: false
@@ -148,22 +150,24 @@ const generateOutfitRecommendations = async (userId, userRequest, sessionId) => 
     const intent = await analyzeUserIntent(userRequest);
     console.log('Intent analysis result:', intent);
     
-    if (!intent.needsOutfitHelp) {
+        if (!intent.needsOutfitHelp) {
       // Check if user said "hi" or similar greetings
       const userMessage = userRequest.toLowerCase().trim();
       console.log('Checking for greeting:', userMessage);
       console.log('Intent analysis result:', intent);
       
-      if (userMessage === 'hi' || userMessage === 'hello' || userMessage === 'hey') {
+      if (userMessage === 'hi' || userMessage === 'hello' || userMessage === 'hey' || userMessage === 'hi!' || userMessage === 'hi ' || userMessage === 'hello!' || userMessage === 'hey!') {
         console.log('Greeting detected, sending prompt options');
         // Return clickable outfit suggestions
         const promptResponse = JSON.stringify({
           type: 'promptOptions',
-          content: "Welcome back! Ready to style something today? Here are a few ideas to get started:",
+          content: "Hi there! 👋 I'm your personal AI stylist. I can help you create amazing outfits from your wardrobe! Here are some ideas to get started:",
           suggestions: [
-            "I need an outfit for a summer trip",
-            "Help me style a blazer", 
-            "I want to look confident for a presentation"
+            "I need an outfit for a job interview",
+            "Help me style a blazer for work", 
+            "I want to look confident for a presentation",
+            "Show me some casual weekend outfits",
+            "What should I wear to a wedding?"
           ]
         });
         
@@ -172,16 +176,17 @@ const generateOutfitRecommendations = async (userId, userRequest, sessionId) => 
       }
       
       // User doesn't need outfit help, return a helpful response instead
-      const helpfulResponse = `I'm here to help you with fashion and outfit advice! Try asking me things like:
-      
+      const helpfulResponse = `Hi! I'm your personal AI stylist. I can help you create amazing outfits from your wardrobe! 
+
+Try asking me things like:
 • "I need an outfit for a job interview"
 • "What should I wear to a wedding?"
 • "Help me pick an outfit for a date"
 • "I want to look professional for work"
 • "Show me some casual weekend outfits"
 
-What kind of outfit are you looking for?`;
-      
+What kind of outfit are you looking for? 😊`;
+
       await addMessage(sessionId, 'assistant', helpfulResponse);
       return null; // No outfit recommendations needed
     }
