@@ -196,10 +196,204 @@ async function completeMCPSession(sessionId) {
   }
 }
 
+// Move items not worn in X months to unused
+async function moveOldItems(userId, months) {
+  try {
+    console.log(`📅 Moving items not worn in ${months} months for user ${userId}`);
+
+    const cutoffDate = new Date();
+    cutoffDate.setMonth(cutoffDate.getMonth() - months);
+
+    const oldItems = await prisma.clothingItem.findMany({
+      where: {
+        closet: {
+          user_id: userId
+        },
+        is_unused: false,
+        OR: [
+          { last_worn_at: { lt: cutoffDate } },
+          { last_worn_at: null }
+        ]
+      },
+      include: {
+        category: true
+      }
+    });
+
+    if (oldItems.length === 0) {
+      return {
+        success: true,
+        message: `No items found that haven't been worn in the past ${months} months`,
+        count: 0,
+        movedItems: []
+      };
+    }
+
+    const itemIds = oldItems.map(item => item.id);
+
+    // Mark items as unused
+    await prisma.clothingItem.updateMany({
+      where: {
+        id: { in: itemIds }
+      },
+      data: {
+        is_unused: true,
+        unused_at: new Date()
+      }
+    });
+
+    return {
+      success: true,
+      message: `Successfully moved ${oldItems.length} items that haven't been worn in the past ${months} months to unused`,
+      count: oldItems.length,
+      movedItems: oldItems.map(item => ({
+        id: item.id,
+        label: item.label,
+        category: item.category.title,
+        wear_count: item.wear_count,
+        last_worn_at: item.last_worn_at
+      }))
+    };
+
+  } catch (error) {
+    console.error('Error in moveOldItems:', error);
+    throw new Error('Failed to move old items');
+  }
+}
+
+// Move items with low wear count to unused
+async function moveLowWearItems(userId, maxWearCount) {
+  try {
+    console.log(`📊 Moving items with wear count <= ${maxWearCount} for user ${userId}`);
+
+    const lowWearItems = await prisma.clothingItem.findMany({
+      where: {
+        closet: {
+          user_id: userId
+        },
+        is_unused: false,
+        wear_count: { lte: maxWearCount }
+      },
+      include: {
+        category: true
+      },
+      orderBy: {
+        wear_count: 'asc'
+      }
+    });
+
+    if (lowWearItems.length === 0) {
+      return {
+        success: true,
+        message: `No items found with wear count <= ${maxWearCount}`,
+        count: 0,
+        movedItems: []
+      };
+    }
+
+    const itemIds = lowWearItems.map(item => item.id);
+
+    // Mark items as unused
+    await prisma.clothingItem.updateMany({
+      where: {
+        id: { in: itemIds }
+      },
+      data: {
+        is_unused: true,
+        unused_at: new Date()
+      }
+    });
+
+    return {
+      success: true,
+      message: `Successfully moved ${lowWearItems.length} items with low wear count to unused`,
+      count: lowWearItems.length,
+      movedItems: lowWearItems.map(item => ({
+        id: item.id,
+        label: item.label,
+        category: item.category.title,
+        wear_count: item.wear_count,
+        last_worn_at: item.last_worn_at
+      }))
+    };
+
+  } catch (error) {
+    console.error('Error in moveLowWearItems:', error);
+    throw new Error('Failed to move low wear items');
+  }
+}
+
+// Move specific item by description to unused
+async function moveItemByDescription(userId, description) {
+  try {
+    console.log(`🔍 Moving item by description: "${description}" for user ${userId}`);
+
+    // Search for items matching the description
+    const matchingItems = await prisma.clothingItem.findMany({
+      where: {
+        closet: {
+          user_id: userId
+        },
+        is_unused: false,
+        OR: [
+          { label: { contains: description, mode: 'insensitive' } },
+          { description: { contains: description, mode: 'insensitive' } },
+          { ai_tag: { contains: description, mode: 'insensitive' } }
+        ]
+      },
+      include: {
+        category: true
+      }
+    });
+
+    if (matchingItems.length === 0) {
+      return {
+        success: true,
+        message: `No items found matching "${description}"`,
+        count: 0,
+        movedItems: []
+      };
+    }
+
+    const itemIds = matchingItems.map(item => item.id);
+
+    // Mark items as unused
+    await prisma.clothingItem.updateMany({
+      where: {
+        id: { in: itemIds }
+      },
+      data: {
+        is_unused: true,
+        unused_at: new Date()
+      }
+    });
+
+    return {
+      success: true,
+      message: `Successfully moved ${matchingItems.length} item(s) matching "${description}" to unused`,
+      count: matchingItems.length,
+      movedItems: matchingItems.map(item => ({
+        id: item.id,
+        label: item.label,
+        category: item.category.title,
+        wear_count: item.wear_count,
+        last_worn_at: item.last_worn_at
+      }))
+    };
+
+  } catch (error) {
+    console.error('Error in moveItemByDescription:', error);
+    throw new Error('Failed to move item by description');
+  }
+}
+
 module.exports = {
   analyzeWardrobeForDonation,
   markItemsAsUnused,
   getUnusedItems,
   createMCPSession,
-  completeMCPSession
+  completeMCPSession,
+  moveOldItems,
+  moveLowWearItems,
+  moveItemByDescription
 };
