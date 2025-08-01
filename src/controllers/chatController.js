@@ -238,12 +238,23 @@ const sendMessage = async (req, res) => {
       parseInt(sessionId)
     );
 
-    // If no recommendations were generated, just return success
+    // If no recommendations were generated, get the last assistant message
     if (!recommendations) {
+      // Get the last assistant message that was just added
+      const lastMessage = await prisma.chatMessage.findFirst({
+        where: {
+          session_id: parseInt(sessionId),
+          role: 'assistant'
+        },
+        orderBy: {
+          sent_at: 'desc'
+        }
+      });
+
       return res.status(200).json({
         success: true,
         data: {
-          message: "Message processed successfully",
+          message: lastMessage ? lastMessage.content : "Message sent successfully",
           recommendations: null
         }
       });
