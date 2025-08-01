@@ -176,15 +176,17 @@ const generateOutfitRecommendations = async (userId, userRequest, sessionId) => 
       }
       
       // Check for wardrobe management commands
-      if (userMessage.includes('move') && userMessage.includes('unused')) {
+      if (userMessage.includes('move') && (userMessage.includes('unused') || userMessage.includes('unsued'))) {
         // Handle wardrobe management commands
+        console.log('🎯 Wardrobe management command detected:', userMessage);
         let response = '';
         
         // Check for specific commands
-        if (userMessage.includes('past') && userMessage.includes('month')) {
-          // Extract number of months
-          const monthMatch = userMessage.match(/(\d+)\s*month/);
+        if (userMessage.includes('past') && (userMessage.includes('month') || userMessage.includes('work'))) {
+          // Extract number of months - handle typos like "nto work" = "not worn"
+          const monthMatch = userMessage.match(/(\d+)\s*(?:month|work)/);
           const months = monthMatch ? parseInt(monthMatch[1]) : 3;
+          console.log('📅 Time-based command detected:', { months, userMessage });
           
           try {
             // Call the MCP service directly
@@ -199,6 +201,7 @@ const generateOutfitRecommendations = async (userId, userRequest, sessionId) => 
           // Extract wear count
           const wearMatch = userMessage.match(/(\d+)\s*wear/);
           const maxWear = wearMatch ? parseInt(wearMatch[1]) : 3;
+          console.log('📊 Low wear command detected:', { maxWear, userMessage });
           
           try {
             const mcpService = require('./mcpService');
@@ -212,6 +215,7 @@ const generateOutfitRecommendations = async (userId, userRequest, sessionId) => 
           // Extract item description
           const itemMatch = userMessage.match(/move\s+(.*?)\s+to\s+unused/i);
           const description = itemMatch ? itemMatch[1].trim() : 'item';
+          console.log('🔍 Item-specific command detected:', { description, userMessage });
           
           try {
             const mcpService = require('./mcpService');
@@ -237,6 +241,7 @@ Would you like me to:
 Just let me know what you'd like to do! 😊`;
         }
 
+        console.log('💬 Sending response:', response);
         await addMessage(sessionId, 'assistant', response);
         return null;
       }
