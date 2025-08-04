@@ -462,6 +462,14 @@ const response = await openai.images.generate({
 
 # Backend API Requests Graph
 
+### Legend
+- ✅ = Authentication Required
+- ❌ = No Authentication Required
+- `GET` = Retrieve data
+- `POST` = Create new resource
+- `PATCH` = Update existing resource
+- `DELETE` = Remove resource
+
 ## 🔐 Authentication Routes
 
 | Method | Endpoint | Auth | Description |
@@ -541,13 +549,7 @@ const response = await openai.images.generate({
 
 **Total Endpoints: 30**
 
-### Legend
-- ✅ = Authentication Required
-- ❌ = No Authentication Required
-- `GET` = Retrieve data
-- `POST` = Create new resource
-- `PATCH` = Update existing resource
-- `DELETE` = Remove resource
+
 
 
 #### GPT-4 (Chat & Recommendations)
@@ -944,5 +946,6 @@ For support and questions:
 ---
 
 **Built with ❤️ by the ReModa Team**
+
 
 
