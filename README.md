@@ -1,18 +1,88 @@
 # ReModa Backend
 
-A comprehensive fashion styling platform backend built with Node.js, Express, and Prisma. This powers the ReModa frontend application, providing AI-powered outfit generation, user management, and clothing item organization.
+A comprehensive AI-powered fashion styling platform backend built with Node.js, Express, Prisma, and OpenAI. This powers the ReModa frontend application, providing intelligent outfit generation, wardrobe management, wear tracking, and natural language command processing.
 
-### Prerequisites
-- Node.js 18.x or higher
-- PostgreSQL database
-- AWS S3 (for image storage)
-- OpenAI API key (for AI features)
+## 🚀 Features
 
-### Installation
+### ✅ Core Features
+- **AI-Powered Outfit Generation** - GPT-4 Vision + DALL-E 3
+- **Wear Tracking System** - Automatic wear count and date tracking
+- **MCP (Model Context Protocol) Server** - Intelligent wardrobe analysis
+- **Natural Language Commands** - Chat-based wardrobe management
+- **Avatar Generation** - Personalized outfit visualization
+- **Upload Queue System** - Asynchronous image processing
+- **Automatic Database Schema Management** - Production-ready migrations
+
+### ✅ AI Integrations
+- **OpenAI GPT-4 Vision** - Clothing item analysis and description
+- **OpenAI DALL-E 3** - Store image generation and avatar creation
+- **OpenAI GPT-4** - Chat responses and outfit recommendations
+- **Fuzzy Category Matching** - Intelligent clothing categorization
+
+### ✅ Wardrobe Management
+- **Move to Unused** - Manual and automatic item management
+- **Wear Analysis** - Time-based and frequency-based suggestions
+- **Donation Suggestions** - AI-powered wardrobe optimization
+- **Batch Operations** - Bulk item management commands
+
+## 🏗️ Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    FRONTEND (React/Next.js)                    │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐           │
+│  │   Signup    │  │   Upload    │  │    Chat     │           │
+│  │   Signin    │  │   Closet    │  │   Stylist   │           │
+│  └─────────────┘  └─────────────┘  └─────────────┘           │
+└─────────────────────────────────────────────────────────────────┘
+                                │
+┌─────────────────────────────────────────────────────────────────┐
+│                    EXPRESS.JS SERVER                           │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐           │
+│  │   CORS      │  │   JWT Auth  │  │   Routes    │           │
+│  │ Middleware  │  │ Middleware  │  │   Router    │           │
+│  └─────────────┘  └─────────────┘  └─────────────┘           │
+└─────────────────────────────────────────────────────────────────┘
+                                │
+┌─────────────────────────────────────────────────────────────────┐
+│                    CORE SERVICES                               │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐           │
+│  │   Upload    │  │    Chat     │  │    MCP      │           │
+│  │   Queue     │  │  Service    │  │  Service    │           │
+│  └─────────────┘  └─────────────┘  └─────────────┘           │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐           │
+│  │   Outfit    │  │   Clothing  │  │   Avatar    │           │
+│  │  Service    │  │   Service   │  │ Generation  │           │
+│  └─────────────┘  └─────────────┘  └─────────────┘           │
+└─────────────────────────────────────────────────────────────────┘
+                                │
+┌─────────────────────────────────────────────────────────────────┐
+│                    DATABASE (PostgreSQL)                       │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐           │
+│  │    Users    │  │  Clothing   │  │   Outfits   │           │
+│  │   (JWT)     │  │   Items     │  │  (Wear)     │           │
+│  └─────────────┘  └─────────────┘  └─────────────┘           │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐           │
+│  │  Categories │  │   Chat      │  │   MCP       │           │
+│  │   (User)    │  │  Sessions   │  │  Sessions   │           │
+│  └─────────────┘  └─────────────┘  └─────────────┘           │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+## 📋 Prerequisites
+
+- **Node.js** 18.x or higher
+- **PostgreSQL** database
+- **AWS S3** (for image storage)
+- **OpenAI API** key (for AI features)
+- **Render** (for deployment)
+
+## 🛠️ Installation
+
 ```bash
 # Clone the repository
-git clone <your-backend-repo-url>
-cd re-moda-backend
+git clone https://github.com/Re-Moda/Re-Moda-Backend.git
+cd Re-Moda-Backend
 
 # Install dependencies
 npm install
@@ -29,7 +99,7 @@ npx prisma db push
 npm run dev
 ```
 
-## Environment Variables
+## 🔧 Environment Variables
 
 ```env
 # Database
@@ -52,115 +122,133 @@ PORT=3000
 NODE_ENV=development
 ```
 
-## Database Schema
+## 🗄️ Database Schema
 
 ### Core Models
 
 #### User Model
 ```prisma
 model User {
-  id              Int       @id @default(autoincrement())
-  email           String    @unique
-  password        String
-  username        String?
-  avatar_url      String?
-  coin_balance    Int       @default(100)
-  upload_count    Int       @default(0)
-  created_at      DateTime  @default(now())
-  updated_at      DateTime  @updatedAt
+  id                   Int          @id @default(autoincrement())
+  email                String       @unique
+  username             String       @unique
+  password_hash        String
+  google_id            String?
+  coin_balance         Int          @default(0)
+  security_question    String
+  security_answer_hash String
+  created_at           DateTime     @default(now())
+  updated_at           DateTime     @updatedAt
+  role                 String       @default("user")
+  avatar_url           String?
+  avatar_key           String?
+  avatar_id            Int?         @default(1)
 
   // Relations
-  clothingItems   ClothingItem[]
-  outfits         Outfit[]
-  chatSessions    ChatSession[]
+  closets              Closet[]
+  categories           Category[]
+  outfits              Outfit[]
+  chatSessions         ChatSession[]
+  mcpSessions          MCPSession[]
 }
 ```
 
 #### ClothingItem Model
 ```prisma
 model ClothingItem {
-  id              Int       @id @default(autoincrement())
-  user_id         Int
-  label           String
-  category        String    // "Top", "Bottom", "Shoe"
-  tag             String?   // Alternative category field
-  description     String?
-  image_url       String    // S3 URL
-  is_unused       Boolean   @default(false)
-  unused_at       DateTime?
-  created_at      DateTime  @default(now())
-  updated_at      DateTime  @updatedAt
+  id                Int      @id @default(autoincrement())
+  closet_id         Int
+  category_id       Int
+  bucket_name       String
+  image_key         String
+  label             String
+  description       String
+  ai_tag            String?      // AI-generated tag
+  original_image_url String?     // Original image URL
+  wear_count        Int      @default(0)
+  last_worn_at      DateTime?
+  is_unused         Boolean  @default(false)
+  unused_at         DateTime?
+  created_at        DateTime @default(now())
+  updated_at        DateTime @updatedAt
 
   // Relations
-  user            User      @relation(fields: [user_id], references: [id])
-  outfitItems     OutfitItem[]
+  closet     Closet    @relation(fields: [closet_id], references: [id])
+  category   Category  @relation(fields: [category_id], references: [id])
+  bucket     S3Bucket  @relation("BucketClothingItems", fields: [bucket_name], references: [name])
+  outfitClothingItems OutfitClothingItem[]
 }
 ```
 
 #### Outfit Model
 ```prisma
 model Outfit {
-  id              Int       @id @default(autoincrement())
-  user_id         Int
-  title           String
-  generated_image_url String?
-  is_favorite     Boolean   @default(false)
-  is_recurring    Boolean   @default(false)
-  created_at      DateTime  @default(now())
-  updated_at      DateTime  @updatedAt
+  id             Int      @id @default(autoincrement())
+  user_id        Int
+  bucket_name    String?
+  image_key      String?
+  title          String
+  is_favorite    Boolean  @default(false)
+  is_recurring   Boolean  @default(false)
+  wear_count     Int      @default(0)
+  last_worn_at   DateTime?
+  mcp_session_id Int?
+  created_at     DateTime @default(now())
+  updated_at     DateTime @updatedAt
 
   // Relations
-  user            User      @relation(fields: [user_id], references: [id])
-  outfitItems     OutfitItem[]
+  user       User     @relation(fields: [user_id], references: [id])
+  bucket     S3Bucket? @relation("BucketOutfits", fields: [bucket_name], references: [name])
+  mcpSession MCPSession? @relation(fields: [mcp_session_id], references: [id])
+  outfitClothingItems OutfitClothingItem[]
+  mcpSessionOutfits  MCPSessionOutfit[]
 }
 ```
 
-#### OutfitItem Model (Junction Table)
+#### MCP Session Model
 ```prisma
-model OutfitItem {
-  id              Int       @id @default(autoincrement())
-  outfit_id       Int
-  clothing_item_id Int
-  created_at      DateTime  @default(now())
+model MCPSession {
+  id             Int      @id @default(autoincrement())
+  user_id        Int
+  prompt_payload Json
+  status         String   @default("pending")
+  created_at     DateTime @default(now())
+  completed_at   DateTime?
 
   // Relations
-  outfit          Outfit    @relation(fields: [outfit_id], references: [id])
-  clothingItem    ClothingItem @relation(fields: [clothing_item_id], references: [id])
+  user           User     @relation(fields: [user_id], references: [id])
+  outfits        Outfit[]
+  mcpSessionOutfits MCPSessionOutfit[]
 }
 ```
 
-#### ChatSession Model
+#### Chat Session & Messages
 ```prisma
 model ChatSession {
-  id              Int       @id @default(autoincrement())
-  user_id         Int
-  title           String?
-  started_at      DateTime  @default(now())
-  updated_at      DateTime  @updatedAt
+  id         Int      @id @default(autoincrement())
+  user_id    Int
+  started_at DateTime @default(now())
 
   // Relations
-  user            User      @relation(fields: [user_id], references: [id])
-  messages        ChatMessage[]
+  user       User     @relation(fields: [user_id], references: [id])
+  messages   ChatMessage[]
 }
-```
 
-#### ChatMessage Model
-```prisma
 model ChatMessage {
-  id              Int       @id @default(autoincrement())
-  session_id      Int
-  role            String    // "user" or "assistant"
-  content         String
-  sent_at         DateTime  @default(now())
+  id         Int      @id @default(autoincrement())
+  session_id Int
+  role       String
+  content    String
+  sent_at    DateTime @default(now())
 
   // Relations
-  session         ChatSession @relation(fields: [session_id], references: [id])
+  session    ChatSession @relation(fields: [session_id], references: [id])
 }
 ```
 
-## Authentication
+## 🔐 Authentication
 
-All protected routes require JWT authentication via Bearer token in the Authorization header:
+All protected routes require JWT authentication via Bearer token:
 
 ```javascript
 headers: {
@@ -178,84 +266,32 @@ headers: {
 }
 ```
 
-## API Endpoints
+## 📡 API Endpoints
 
-### Authentication Routes
+### 🔐 Authentication Routes
 
-#### POST /auth/register
+#### POST /auth/signup
 Register a new user account.
 
 **Request Body:**
 ```json
 {
   "email": "user@example.com",
+  "username": "fashionista",
   "password": "securepassword123",
-  "username": "fashionista"
+  "security_question": "What's your favorite color?",
+  "security_answer": "blue"
 }
 ```
 
-**Response:**
-```json
-{
-  "success": true,
-  "data": {
-    "user": {
-      "id": 1,
-      "email": "user@example.com",
-      "username": "fashionista",
-      "coin_balance": 100,
-      "upload_count": 0
-    },
-    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-  },
-  "message": "User registered successfully"
-}
-```
-
-#### POST /auth/login
+#### POST /auth/signin
 Authenticate existing user.
 
 **Request Body:**
 ```json
 {
-  "email": "user@example.com",
+  "username": "fashionista",
   "password": "securepassword123"
-}
-```
-
-**Response:**
-```json
-{
-  "success": true,
-  "data": {
-    "user": {
-      "id": 1,
-      "email": "user@example.com",
-      "username": "fashionista",
-      "coin_balance": 100,
-      "upload_count": 0
-    },
-    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-  },
-  "message": "Login successful"
-}
-```
-
-#### POST /auth/forgot-password
-Request password reset.
-
-**Request Body:**
-```json
-{
-  "email": "user@example.com"
-}
-```
-
-**Response:**
-```json
-{
-  "success": true,
-  "message": "Password reset email sent"
 }
 ```
 
@@ -264,304 +300,90 @@ Request password reset.
 #### GET /users/me
 Get current user profile.
 
-**Headers:** `Authorization: Bearer <token>`
-
-**Response:**
-```json
-{
-  "success": true,
-  "data": {
-    "id": 1,
-    "email": "user@example.com",
-    "username": "fashionista",
-    "avatar_url": "https://s3.amazonaws.com/...",
-    "coin_balance": 100,
-    "upload_count": 5
-  }
-}
-```
-
 #### PATCH /users/me
 Update user profile.
-
-**Headers:** `Authorization: Bearer <token>`
-
-**Request Body:**
-```json
-{
-  "username": "newusername",
-  "avatar_url": "https://s3.amazonaws.com/..."
-}
-```
-
-**Response:**
-```json
-{
-  "success": true,
-  "data": {
-    "id": 1,
-    "email": "user@example.com",
-    "username": "newusername",
-    "avatar_url": "https://s3.amazonaws.com/..."
-  },
-  "message": "Profile updated successfully"
-}
-```
 
 #### GET /users/me/coins
 Get user's coin balance.
 
-**Headers:** `Authorization: Bearer <token>`
-
-**Response:**
-```json
-{
-  "success": true,
-  "data": {
-    "coin_balance": 100
-  }
-}
-```
-
 #### POST /users/me/coins/spend
 Spend coins for AI features.
-
-**Headers:** `Authorization: Bearer <token>`
-
-**Request Body:**
-```json
-{
-  "amount": 10
-}
-```
-
-**Response:**
-```json
-{
-  "success": true,
-  "data": {
-    "coin_balance": 90
-  },
-  "message": "Coins spent successfully"
-}
-```
-
-#### GET /users/me/upload-count
-Get user's upload count and closet access status.
-
-**Headers:** `Authorization: Bearer <token>`
-
-**Response:**
-```json
-{
-  "success": true,
-  "data": {
-    "count": 5,
-    "hasMetMinimum": true
-  }
-}
-```
 
 ### 👕 Clothing Items Routes
 
 #### GET /clothing-items
 Get all clothing items for the authenticated user.
 
-**Headers:** `Authorization: Bearer <token>`
-
-**Response:**
-```json
-{
-  "success": true,
-  "data": [
-    {
-      "id": 1,
-      "label": "Blue T-shirt",
-      "category": "Top",
-      "tag": "top",
-      "description": "A comfortable blue t-shirt",
-      "image_url": "https://s3.amazonaws.com/...",
-      "is_unused": false,
-      "unused_at": null,
-      "created_at": "2024-01-01T00:00:00Z"
-    }
-  ]
-}
-```
-
 #### POST /clothing-items/upload
-Upload a new clothing item.
-
-**Headers:** `Authorization: Bearer <token>`
-
-**Request Body:** `multipart/form-data`
-```
-image: [file] - The clothing item image
-category: "Top" | "Bottom" | "Shoe"
-label: "Blue T-shirt" - Item name
-description: "A comfortable blue t-shirt" - Optional description
-tag: "top" - Alternative category field
-```
-
-**Response:**
-```json
-{
-  "success": true,
-  "data": {
-    "id": 1,
-    "label": "Blue T-shirt",
-    "category": "Top",
-    "image_url": "https://s3.amazonaws.com/...",
-    "created_at": "2024-01-01T00:00:00Z"
-  },
-  "message": "Clothing item uploaded successfully"
-}
-```
+Upload a new clothing item with AI analysis.
 
 #### PATCH /clothing-items/:id/unused
 Mark a clothing item as unused.
 
-**Headers:** `Authorization: Bearer <token>`
+#### PATCH /clothing-items/:id/restore
+Restore an unused item back to closet.
 
-**Request Body:** `{}` (empty)
-
-**Response:**
-```json
-{
-  "success": true,
-  "data": {
-    "id": 1,
-    "label": "Blue T-shirt",
-    "is_unused": true,
-    "unused_at": "2024-01-01T00:00:00Z"
-  },
-  "message": "Item marked as unused successfully"
-}
-```
-
-### Outfits Routes
+### 🎨 Outfits Routes
 
 #### GET /outfits
 Get all outfits for the authenticated user.
 
-**Headers:** `Authorization: Bearer <token>`
-
-**Response:**
-```json
-{
-  "success": true,
-  "data": [
-    {
-      "id": 1,
-      "title": "Casual Summer Look",
-      "generated_image_url": "https://s3.amazonaws.com/...",
-      "is_favorite": true,
-      "is_recurring": false,
-      "created_at": "2024-01-01T00:00:00Z",
-      "outfitItems": [
-        {
-          "clothingItem": {
-            "id": 1,
-            "label": "Blue T-shirt",
-            "category": "Top"
-          }
-        }
-      ]
-    }
-  ]
-}
-```
-
 #### POST /outfits
 Create a new outfit.
-
-**Headers:** `Authorization: Bearer <token>`
-
-**Request Body:**
-```json
-{
-  "title": "Casual Summer Look",
-  "clothingItemIds": [1, 2],
-  "generated_image_url": "https://s3.amazonaws.com/..."
-}
-```
-
-**Response:**
-```json
-{
-  "success": true,
-  "data": {
-    "id": 1,
-    "title": "Casual Summer Look",
-    "generated_image_url": "https://s3.amazonaws.com/...",
-    "created_at": "2024-01-01T00:00:00Z"
-  },
-  "message": "Outfit created successfully"
-}
-```
 
 #### PATCH /outfits/:id/favorite
 Toggle favorite status for an outfit.
 
-**Headers:** `Authorization: Bearer <token>`
-
-**Request Body:** `{}` (empty)
-
-**Response:**
-```json
-{
-  "success": true,
-  "data": {
-    "id": 1,
-    "is_favorite": true
-  },
-  "message": "Favorite status updated successfully"
-}
-```
-
 #### PATCH /outfits/:id/worn
-Toggle worn/recurring status for an outfit.
-
-**Headers:** `Authorization: Bearer <token>`
-
-**Request Body:** `{}` (empty)
-
-**Response:**
-```json
-{
-  "success": true,
-  "data": {
-    "id": 1,
-    "is_recurring": true
-  },
-  "message": "Worn status updated successfully"
-}
-```
-
-### 🤖 AI Features Routes
+Mark outfit as worn (updates wear counts).
 
 #### POST /outfits/generate-avatar
 Generate AI outfit on user avatar.
 
-**Headers:** `Authorization: Bearer <token>`
+#### POST /outfits/build-your-own
+Create custom outfit with multiple items.
+
+### 🤖 MCP (Model Context Protocol) Routes
+
+#### POST /mcp/analyze-wardrobe
+Analyze user's wardrobe for donation suggestions.
+
+#### POST /mcp/donation-suggestions
+Get detailed donation recommendations.
+
+#### POST /mcp/mark-unused
+Mark specific items as unused.
+
+#### GET /mcp/unused-items
+Get all unused items for user.
+
+#### POST /mcp/move-old-items
+Move items not worn in X months to unused.
 
 **Request Body:**
 ```json
 {
-  "top_id": 1,
-  "bottom_id": 2
+  "months": 3
 }
 ```
 
-**Response:**
+#### POST /mcp/move-low-wear-items
+Move items with low wear count to unused.
+
+**Request Body:**
 ```json
 {
-  "success": true,
-  "data": {
-    "generated_image_url": "https://s3.amazonaws.com/...",
-    "cost": 10
-  },
-  "message": "Avatar generated successfully"
+  "maxWearCount": 3
+}
+```
+
+#### POST /mcp/move-item-by-description
+Move specific item by description to unused.
+
+**Request Body:**
+```json
+{
+  "description": "blue shirt"
 }
 ```
 
@@ -570,194 +392,348 @@ Generate AI outfit on user avatar.
 #### POST /chat/sessions
 Create a new chat session.
 
-**Headers:** `Authorization: Bearer <token>`
-
-**Request Body:** `{}` (empty)
-
-**Response:**
-```json
-{
-  "success": true,
-  "data": {
-    "sessionId": 1,
-    "message": "Chat session started successfully"
-  }
-}
-```
-
 #### GET /chat/sessions
 Get all chat sessions for the user.
-
-**Headers:** `Authorization: Bearer <token>`
-
-**Response:**
-```json
-{
-  "success": true,
-  "data": [
-    {
-      "id": 1,
-      "title": "Summer Outfit Request",
-      "started_at": "2024-01-01T00:00:00Z",
-      "messages": [
-        {
-          "id": 1,
-          "role": "user",
-          "content": "I need a summer outfit",
-          "sent_at": "2024-01-01T00:00:00Z"
-        }
-      ]
-    }
-  ]
-}
-```
 
 #### GET /chat/sessions/:sessionId
 Get specific chat session with all messages.
 
-**Headers:** `Authorization: Bearer <token>`
-
-**Response:**
-```json
-{
-  "success": true,
-  "data": {
-    "id": 1,
-    "title": "Summer Outfit Request",
-    "started_at": "2024-01-01T00:00:00Z",
-    "messages": [
-      {
-        "id": 1,
-        "role": "user",
-        "content": "I need a summer outfit",
-        "sent_at": "2024-01-01T00:00:00Z"
-      },
-      {
-        "id": 2,
-        "role": "assistant",
-        "content": "Here are some summer outfit recommendations...",
-        "sent_at": "2024-01-01T00:00:01Z"
-      }
-    ]
-  }
-}
-```
-
 #### POST /chat/sessions/:sessionId/messages
 Send a message to the AI stylist.
 
-**Headers:** `Authorization: Bearer <token>`
-
-**Request Body:**
-```json
-{
-  "message": "I need a casual outfit for a picnic"
-}
-```
-
-**Response:**
-```json
-{
-  "success": true,
-  "data": {
-    "recommendations": [
-      {
-        "outfit": "Casual Picnic Look",
-        "description": "A comfortable and stylish outfit perfect for outdoor activities",
-        "image_url": "https://s3.amazonaws.com/..."
-      }
-    ]
-  },
-  "message": "Outfit recommendations generated successfully"
-}
-```
-
-#### POST /chat/sessions/:sessionId/outfits
-Create outfit from chat recommendation.
-
-**Headers:** `Authorization: Bearer <token>`
-
-**Request Body:**
-```json
-{
-  "recommendationIndex": 0,
-  "outfitData": {
-    "title": "Casual Picnic Look",
-    "clothingItemIds": [1, 2, 3],
-    "imageUrl": "https://s3.amazonaws.com/..."
-  }
-}
-```
-
-**Response:**
-```json
-{
-  "success": true,
-  "data": {
-    "outfit": {
-      "id": 1,
-      "title": "Casual Picnic Look"
-    },
-    "avatarImage": "https://s3.amazonaws.com/...",
-    "message": "Outfit created and avatar updated successfully"
-  }
-}
-```
-
-#### PATCH /chat/sessions/:sessionId
-Update chat session title.
-
-**Headers:** `Authorization: Bearer <token>`
-
-**Request Body:**
-```json
-{
-  "title": "Updated Chat Title"
-}
-```
-
-**Response:**
-```json
-{
-  "success": true,
-  "data": {
-    "id": 1,
-    "title": "Updated Chat Title"
-  },
-  "message": "Session title updated successfully"
-}
-```
+#### POST /chat/sessions/:sessionId/clear
+Clear chat (save current session and start new one).
 
 #### DELETE /chat/sessions/:sessionId
 Delete a chat session and all its messages.
 
-**Headers:** `Authorization: Bearer <token>`
+## 🔄 Upload Queue System
 
-**Response:**
+### How It Works
+1. **User Uploads Image** → Added to queue
+2. **S3 Upload** → Image stored in AWS S3
+3. **AI Analysis** → GPT-4 Vision analyzes image
+4. **Category Matching** → Fuzzy matching for categories
+5. **DALL-E Generation** → Store image created
+6. **Database Storage** → Item saved with all metadata
+
+### Queue Processing
+```javascript
+// Automatic processing with retry logic
+const uploadQueue = new UploadQueueService();
+uploadQueue.processQueue(); // Runs continuously
+```
+
+## 🤖 AI Integration
+
+### OpenAI Services Used
+
+#### GPT-4 Vision (Image Analysis)
+```javascript
+// Analyzes uploaded clothing images
+const description = await openai.chat.completions.create({
+  model: 'gpt-4o',
+  messages: [
+    {
+      role: 'user',
+      content: [
+        { type: 'text', text: 'Describe this clothing item...' },
+        { type: 'image_url', image_url: { url: imageUrl } }
+      ]
+    }
+  ]
+});
+```
+
+#### DALL-E 3 (Image Generation)
+```javascript
+// Generates store images and avatars
+const response = await openai.images.generate({
+  model: 'dall-e-3',
+  prompt: 'Generate a full-body image...',
+  n: 1,
+  size: '1024x1024',
+  response_format: 'url'
+});
+```
+
+#### GPT-4 (Chat & Recommendations)
+```javascript
+// Powers chat responses and outfit recommendations
+const response = await openai.chat.completions.create({
+  model: 'gpt-4o',
+  messages: [
+    { role: 'system', content: 'You are a personal AI fashion stylist...' },
+    { role: 'user', content: userRequest }
+  ]
+});
+```
+
+## 🎯 MCP Server Features
+
+### Wardrobe Analysis
+- **Time-based filtering** - Items not worn in X months
+- **Frequency analysis** - Items worn less than X times
+- **Donation suggestions** - AI-powered recommendations
+- **Batch operations** - Bulk item management
+
+### Natural Language Commands
+```javascript
+// Supported commands:
+"move items i have nto work in the past 3 months to unsued"
+"move low wear items to unused"
+"move blue shirt to unused"
+"analyze my wardrobe"
+```
+
+### Command Processing
+```javascript
+// Fuzzy matching for typos
+if (userMessage.includes('unsued')) userMessage = userMessage.replace('unsued', 'unused');
+if (userMessage.includes('nto work')) userMessage = userMessage.replace('nto work', 'not worn');
+```
+
+## 📊 Wear Tracking System
+
+### Automatic Wear Count Updates
+```javascript
+// When user marks outfit as worn
+const markAsWorn = async (userId, outfitId) => {
+  // Update outfit wear count
+  await prisma.outfit.update({
+    where: { id: outfitId },
+    data: {
+      wear_count: { increment: 1 },
+      last_worn_at: new Date()
+    }
+  });
+  
+  // Update all clothing items in outfit
+  await prisma.clothingItem.updateMany({
+    where: { id: { in: clothingItemIds } },
+    data: {
+      wear_count: { increment: 1 },
+      last_worn_at: new Date()
+    }
+  });
+};
+```
+
+### Wear Analysis
+- **Items worn 0 times** - Never worn
+- **Items worn 1-2 times** - Rarely worn
+- **Items not worn in 6+ months** - Old items
+- **Average wear count** - Wardrobe utilization
+
+## 🗂️ S3 Bucket Management
+
+### Bucket Structure
+```
+clothing-items-remoda/
+├── clothing-items/
+│   ├── original-images/
+│   └── store-images/
+├── outfits/
+│   └── generated-images/
+└── avatars/
+    └── user-avatars/
+```
+
+### File Naming Convention
+```javascript
+// Original images
+const originalKey = `clothing-items/original-images/${uuid}.png`;
+
+// Store images (DALL-E generated)
+const storeKey = `clothing-items/store-images/${uuid}.png`;
+
+// Outfit images
+const outfitKey = `outfits/generated-images/${uuid}.png`;
+
+// Avatar images
+const avatarKey = `avatars/user-avatars/${userId}-${timestamp}.png`;
+```
+
+### S3 Service Functions
+```javascript
+// Upload file to S3
+const uploadFileToS3 = async (file, key) => {
+  const params = {
+    Bucket: process.env.AWS_S3_BUCKET,
+    Key: key,
+    Body: file.buffer,
+    ContentType: file.mimetype,
+    ACL: 'public-read'
+  };
+  return await s3.upload(params).promise();
+};
+
+// Delete file from S3
+const deleteFileFromS3 = async (key) => {
+  const params = {
+    Bucket: process.env.AWS_S3_BUCKET,
+    Key: key
+  };
+  return await s3.deleteObject(params).promise();
+};
+```
+
+## 🔄 Automatic Database Schema Management
+
+### Production Database Fix
+```javascript
+// Automatically adds missing columns on startup
+const fixDatabaseSchema = async () => {
+  // Check and add avatar_id column
+  const userColumns = await prisma.$queryRaw`
+    SELECT column_name FROM information_schema.columns 
+    WHERE table_name = 'User' AND column_name = 'avatar_id'
+  `;
+  
+  if (userColumns.length === 0) {
+    await prisma.$executeRaw`ALTER TABLE "User" ADD COLUMN "avatar_id" INTEGER DEFAULT 1`;
+  }
+  
+  // Check and add is_unused, unused_at columns
+  const clothingColumns = await prisma.$queryRaw`
+    SELECT column_name FROM information_schema.columns 
+    WHERE table_name = 'ClothingItem' AND column_name IN ('is_unused', 'unused_at')
+  `;
+  
+  if (!clothingColumns.includes('is_unused')) {
+    await prisma.$executeRaw`ALTER TABLE "ClothingItem" ADD COLUMN "is_unused" BOOLEAN NOT NULL DEFAULT false`;
+  }
+};
+```
+
+## 🚀 Deployment
+
+### Render Deployment
+1. **Connect GitHub Repository** to Render
+2. **Set Environment Variables** in Render dashboard
+3. **Deploy as Web Service**
+4. **Build Command**: `npm install && npx prisma generate`
+5. **Start Command**: `npm start`
+
+### Production Environment Variables
+```env
+DATABASE_URL="postgresql://..."
+JWT_SECRET="your-production-secret"
+AWS_ACCESS_KEY_ID="your-aws-key"
+AWS_SECRET_ACCESS_KEY="your-aws-secret"
+AWS_REGION="us-east-2"
+AWS_S3_BUCKET="clothing-items-remoda"
+OPENAI_API_KEY="your-openai-key"
+NODE_ENV=production
+PORT=3000
+```
+
+### Package.json Scripts
 ```json
 {
-  "success": true,
-  "message": "Chat session deleted successfully"
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
+    "build": "npm install",
+    "postinstall": "npx prisma generate && node src/utils/databaseFix.js"
+  }
 }
 ```
 
-### Health Check Routes
+## 🧪 Testing
 
-#### GET /health
-Check API health status.
+### API Testing
+```bash
+# Test authentication
+curl -X POST http://localhost:3000/auth/signup \
+  -H "Content-Type: application/json" \
+  -d '{"email":"test@example.com","username":"test","password":"1234"}'
 
-**Response:**
-```json
-{
-  "success": true,
-  "message": "API is healthy",
-  "timestamp": "2024-01-01T00:00:00Z"
-}
+# Test upload
+curl -X POST http://localhost:3000/clothing-items/upload \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -F "image=@test-image.jpg" \
+  -F "category=Top"
+
+# Test MCP analysis
+curl -X POST http://localhost:3000/mcp/analyze-wardrobe \
+  -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
-## Error Handling
+### Database Testing
+```bash
+# Test database connection
+npx prisma db push
 
-### Standard Error Response Format
+# Test migrations
+npx prisma migrate dev
+
+# Test schema generation
+npx prisma generate
+```
+
+## 📈 Monitoring & Logging
+
+### Log Levels
+- `error` - Application errors and failures
+- `warn` - Warning conditions
+- `info` - General information
+- `debug` - Debug information
+
+### Health Checks
+```javascript
+// Database connection status
+const dbHealth = await prisma.$queryRaw`SELECT 1`;
+
+// S3 connectivity
+const s3Health = await s3.headBucket({ Bucket: process.env.AWS_S3_BUCKET }).promise();
+
+// OpenAI API status
+const openaiHealth = await openai.models.list();
+```
+
+### Performance Metrics
+- **Upload processing time** - Average time for image processing
+- **AI API response time** - OpenAI API performance
+- **Database query time** - Prisma query performance
+- **Memory usage** - Node.js memory consumption
+
+## 🔒 Security Features
+
+### JWT Token Security
+- **24-hour expiration** - Tokens expire after 24 hours
+- **Secure storage** - Tokens stored securely
+- **Refresh mechanism** - Automatic token refresh
+
+### Input Validation
+- **Request body validation** - All inputs validated
+- **File type validation** - Only images accepted
+- **File size limits** - 10MB maximum file size
+- **SQL injection prevention** - Prisma ORM protection
+
+### Rate Limiting
+- **API rate limiting** - Per-user rate limits
+- **Upload rate limiting** - Maximum uploads per hour
+- **AI feature limits** - Coin-based usage limits
+
+### CORS Configuration
+```javascript
+app.use(cors({
+  origin: [
+    'http://localhost:5173',
+    'http://localhost:5174',
+    'http://localhost:3000',
+    'http://localhost:3001',
+    'https://my-remoda.com',
+    'https://www.my-remoda.com'
+  ],
+  credentials: true
+}));
+```
+
+## 🐛 Error Handling
+
+### Standard Error Response
 ```json
 {
   "success": false,
@@ -769,101 +745,109 @@ Check API health status.
 ### Common HTTP Status Codes
 - `200` - Success
 - `201` - Created
-- `400` - Bad Request (invalid input)
-- `401` - Unauthorized (invalid/missing token)
-- `403` - Forbidden (insufficient permissions)
+- `400` - Bad Request
+- `401` - Unauthorized
+- `403` - Forbidden
 - `404` - Not Found
-- `413` - Payload Too Large (file too big)
-- `422` - Unprocessable Entity (validation error)
+- `413` - Payload Too Large
+- `422` - Unprocessable Entity
 - `500` - Internal Server Error
 
-### Validation Errors
-```json
-{
-  "success": false,
-  "message": "Validation failed",
-  "errors": [
-    {
-      "field": "email",
-      "message": "Email is required"
+### Retry Logic
+```javascript
+// Exponential backoff for AI API calls
+const retryWithBackoff = async (fn, maxRetries = 3) => {
+  for (let i = 0; i < maxRetries; i++) {
+    try {
+      return await fn();
+    } catch (error) {
+      if (i === maxRetries - 1) throw error;
+      await new Promise(resolve => setTimeout(resolve, Math.pow(2, i) * 1000));
     }
-  ]
-}
+  }
+};
 ```
 
-## Deployment
+## 📚 API Documentation
 
-### Render Deployment
-1. Connect your GitHub repository to Render
-2. Set environment variables in Render dashboard
-3. Deploy as a Web Service
-4. Set build command: `npm install && npx prisma generate`
-5. Set start command: `npm start`
+### Complete API Reference
+- **Authentication** - User registration and login
+- **User Management** - Profile and coin management
+- **Clothing Items** - Upload, categorize, and manage items
+- **Outfits** - Create and manage outfits
+- **MCP Server** - Wardrobe analysis and management
+- **Chat System** - AI stylist conversations
+- **Avatar Generation** - AI-powered outfit visualization
 
-### Environment Variables for Production
-```env
-DATABASE_URL="postgresql://..."
-JWT_SECRET="your-production-secret"
-AWS_ACCESS_KEY_ID="your-aws-key"
-AWS_SECRET_ACCESS_KEY="your-aws-secret"
-AWS_REGION="us-east-2"
-AWS_S3_BUCKET="your-s3-bucket"
-OPENAI_API_KEY="your-openai-key"
-NODE_ENV=production
-PORT=3000
+### Example API Calls
+```javascript
+// Upload clothing item
+const uploadItem = async (file, category) => {
+  const formData = new FormData();
+  formData.append('image', file);
+  formData.append('category', category);
+  
+  const response = await fetch('/clothing-items/upload', {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${token}` },
+    body: formData
+  });
+  return response.json();
+};
+
+// Generate outfit avatar
+const generateAvatar = async (topId, bottomId) => {
+  const response = await fetch('/outfits/generate-avatar', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ top_id: topId, bottom_id: bottomId })
+  });
+  return response.json();
+};
+
+// Analyze wardrobe
+const analyzeWardrobe = async () => {
+  const response = await fetch('/mcp/analyze-wardrobe', {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${token}` }
+  });
+  return response.json();
+};
 ```
 
-## Testing
+## 🤝 Contributing
 
-### Run Tests
-```bash
-# Run all tests
-npm test
+### Development Setup
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests
+5. Submit a pull request
 
-# Run tests with coverage
-npm run test:coverage
+### Code Style
+- **ESLint** - JavaScript linting
+- **Prettier** - Code formatting
+- **TypeScript** - Type safety (future)
 
-# Run specific test file
-npm test -- --grep "User API"
-```
+### Testing Guidelines
+- **Unit tests** - Service layer testing
+- **Integration tests** - API endpoint testing
+- **E2E tests** - Full workflow testing
 
-### API Testing with Postman
-Import the provided Postman collection to test all endpoints:
-- Authentication flows
-- CRUD operations
-- AI features
-- Chat functionality
+## 📄 License
 
-## Monitoring & Logging
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-### Log Levels
-- `error` - Application errors
-- `warn` - Warning conditions
-- `info` - General information
-- `debug` - Debug information
+## 🆘 Support
 
-### Health Monitoring
-- Database connection status
-- AWS S3 connectivity
-- OpenAI API status
-- Memory usage
-- Response times
+For support and questions:
+- **GitHub Issues** - Bug reports and feature requests
+- **Documentation** - Complete API documentation
+- **Discord** - Community support channel
 
-## Security Features
+---
 
-### JWT Token Security
-- Tokens expire after 24 hours
-- Refresh token mechanism
-- Secure token storage
-
-### Input Validation
-- Request body validation
-- File type validation
-- File size limits
-- SQL injection prevention
-
-### Rate Limiting
-- API rate limiting per user
-- Upload rate limiting
-- AI feature usage limits
-
+**Built with ❤️ by the ReModa Team**
