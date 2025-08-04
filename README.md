@@ -27,6 +27,8 @@ A comprehensive AI-powered fashion styling platform backend built with Node.js, 
 
 ## 🏗️ Architecture
 
+<img width="1887" height="1332" alt="Untitled" src="https://github.com/user-attachments/assets/9f98fec6-9a43-4604-9727-8d71ffd912e8" />
+
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │                    FRONTEND (React/Next.js)                    │
@@ -851,3 +853,4 @@ For support and questions:
 ---
 
 **Built with ❤️ by the ReModa Team**
+
