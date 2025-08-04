@@ -459,6 +459,97 @@ const response = await openai.images.generate({
 });
 ```
 
+
+# Backend API Requests Graph
+
+## 🔐 Authentication Routes
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| `POST` | `/auth/signup` | ❌ | Register a new user account |
+| `POST` | `/auth/signin` | ❌ | Authenticate existing user |
+
+## 👤 User Management Routes
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| `GET` | `/users/me` | ✅ | Get current user profile |
+| `PATCH` | `/users/me` | ✅ | Update user profile |
+| `GET` | `/users/me/coins` | ✅ | Get user coin balance |
+| `POST` | `/users/me/coins/spend` | ✅ | Spend coins for AI features |
+
+## 👕 Clothing Items Routes
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| `GET` | `/clothing-items` | ✅ | Get all clothing items for user |
+| `POST` | `/clothing-items/upload` | ✅ | Upload new clothing item with AI analysis |
+| `PATCH` | `/clothing-items/:id/unused` | ✅ | Mark clothing item as unused |
+| `PATCH` | `/clothing-items/:id/restore` | ✅ | Restore unused item back to closet |
+
+## 🎨 Outfits Routes
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| `GET` | `/outfits` | ✅ | Get all outfits for user |
+| `POST` | `/outfits` | ✅ | Create new outfit |
+| `PATCH` | `/outfits/:id/favorite` | ✅ | Toggle favorite status for outfit |
+| `PATCH` | `/outfits/:id/worn` | ✅ | Mark outfit as worn (updates wear counts) |
+| `POST` | `/outfits/generate-avatar` | ✅ | Generate AI outfit on user avatar |
+| `POST` | `/outfits/build-your-own` | ✅ | Create custom outfit with multiple items |
+
+## �� MCP (Model Context Protocol) Routes
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| `POST` | `/mcp/analyze-wardrobe` | ✅ | Analyze user wardrobe for donation suggestions |
+| `POST` | `/mcp/donation-suggestions` | ✅ | Get detailed donation recommendations |
+| `POST` | `/mcp/mark-unused` | ✅ | Mark specific items as unused |
+| `GET` | `/mcp/unused-items` | ✅ | Get all unused items for user |
+| `POST` | `/mcp/move-old-items` | ✅ | Move items not worn in X months to unused |
+| `POST` | `/mcp/move-low-wear-items` | ✅ | Move items with low wear count to unused |
+| `POST` | `/mcp/move-item-by-description` | ✅ | Move specific item by description to unused |
+
+## 💬 Chat Routes
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| `POST` | `/chat/sessions` | ✅ | Create new chat session |
+| `GET` | `/chat/sessions` | ✅ | Get all chat sessions for user |
+| `GET` | `/chat/sessions/:sessionId` | ✅ | Get specific chat session with all messages |
+| `POST` | `/chat/sessions/:sessionId/messages` | ✅ | Send message to AI stylist |
+| `POST` | `/chat/sessions/:sessionId/clear` | ✅ | Clear chat (save current session and start new one) |
+| `DELETE` | `/chat/sessions/:sessionId` | ✅ | Delete chat session and all messages |
+
+## 🏥 Health Check Routes
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| `GET` | `/health` | ❌ | Check API health status |
+
+## 📊 API Summary
+
+| Category | Endpoints | Auth Required |
+|----------|-----------|---------------|
+| Authentication | 2 | No |
+| User Management | 4 | Yes |
+| Clothing Items | 4 | Yes |
+| Outfits | 6 | Yes |
+| MCP Server | 7 | Yes |
+| Chat System | 6 | Yes |
+| Health Check | 1 | No |
+
+**Total Endpoints: 30**
+
+### Legend
+- ✅ = Authentication Required
+- ❌ = No Authentication Required
+- `GET` = Retrieve data
+- `POST` = Create new resource
+- `PATCH` = Update existing resource
+- `DELETE` = Remove resource
+
+
 #### GPT-4 (Chat & Recommendations)
 ```javascript
 // Powers chat responses and outfit recommendations
@@ -853,4 +944,5 @@ For support and questions:
 ---
 
 **Built with ❤️ by the ReModa Team**
+
 
